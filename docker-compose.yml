@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  matchmaker:
+    build:
+      context: ./matchmaker
+      dockerfile: Dockerfile
+    container_name: matchmaker-service
+    networks:
+      - grpc-network
+    ports:
+      - "50051:50051"
+
+  cliente1:
+    build:
+      context: ./cliente
+      dockerfile: Dockerfile
+    container_name: cliente1-service
+    environment:
+      - CLIENTE_ID=Cliente1
+    depends_on:
+      - matchmaker
+    networks:
+      - grpc-network
+    # Habilitar terminal interactiva
+    stdin_open: true
+    tty: true
+
+  cliente2:
+    build:
+      context: ./cliente
+      dockerfile: Dockerfile
+    container_name: cliente2-service
+    environment:
+      - CLIENTE_ID=Cliente2
+    depends_on:
+      - matchmaker
+    networks:
+      - grpc-network
+    # Habilitar terminal interactiva
+    stdin_open: true
+    tty: true
+
+networks:
+  grpc-network:
+    driver: bridge
