@@ -85,6 +85,19 @@ services:
     # Habilitar terminal interactiva
     stdin_open: true
     tty: true
+    
+  clienteadmin:
+    build:
+      context: ./clienteadmin
+      dockerfile: Dockerfile
+    container_name: clienteadmin-service
+    depends_on:
+      - matchmaker
+    networks:
+      - grpc-network
+    # Habilitar terminal interactiva
+    stdin_open: true
+    tty: true
 
 networks:
   grpc-network:

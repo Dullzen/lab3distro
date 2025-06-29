@@ -1167,6 +1167,412 @@ func (x *MatchResultResponse) GetRelojVectorial() map[string]int32 {
 	return nil
 }
 
+// Solicitud del administrador
+type AdminRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AdminId        string                 `protobuf:"bytes,1,opt,name=admin_id,json=adminId,proto3" json:"admin_id,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,2,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AdminRequest) Reset() {
+	*x = AdminRequest{}
+	mi := &file_sistema_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminRequest) ProtoMessage() {}
+
+func (x *AdminRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminRequest.ProtoReflect.Descriptor instead.
+func (*AdminRequest) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *AdminRequest) GetAdminId() string {
+	if x != nil {
+		return x.AdminId
+	}
+	return ""
+}
+
+func (x *AdminRequest) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Respuesta con el estado completo del sistema
+type SystemStatusResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Servers        []*ServerStatus        `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
+	QueuePlayers   []*QueueInfo           `protobuf:"bytes,2,rep,name=queue_players,json=queuePlayers,proto3" json:"queue_players,omitempty"`
+	ActiveGames    []*Partida             `protobuf:"bytes,3,rep,name=active_games,json=activeGames,proto3" json:"active_games,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,4,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	StatusCode     int32                  `protobuf:"varint,5,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	Message        string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SystemStatusResponse) Reset() {
+	*x = SystemStatusResponse{}
+	mi := &file_sistema_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SystemStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemStatusResponse) ProtoMessage() {}
+
+func (x *SystemStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemStatusResponse.ProtoReflect.Descriptor instead.
+func (*SystemStatusResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SystemStatusResponse) GetServers() []*ServerStatus {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+func (x *SystemStatusResponse) GetQueuePlayers() []*QueueInfo {
+	if x != nil {
+		return x.QueuePlayers
+	}
+	return nil
+}
+
+func (x *SystemStatusResponse) GetActiveGames() []*Partida {
+	if x != nil {
+		return x.ActiveGames
+	}
+	return nil
+}
+
+func (x *SystemStatusResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+func (x *SystemStatusResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *SystemStatusResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// Información de un servidor
+type ServerStatus struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	LastUpdate    int64                  `protobuf:"varint,4,opt,name=last_update,json=lastUpdate,proto3" json:"last_update,omitempty"` // timestamp de última actualización
+	ActiveMatchId string                 `protobuf:"bytes,5,opt,name=active_match_id,json=activeMatchId,proto3" json:"active_match_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerStatus) Reset() {
+	*x = ServerStatus{}
+	mi := &file_sistema_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerStatus) ProtoMessage() {}
+
+func (x *ServerStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerStatus.ProtoReflect.Descriptor instead.
+func (*ServerStatus) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ServerStatus) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *ServerStatus) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ServerStatus) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *ServerStatus) GetLastUpdate() int64 {
+	if x != nil {
+		return x.LastUpdate
+	}
+	return 0
+}
+
+func (x *ServerStatus) GetActiveMatchId() string {
+	if x != nil {
+		return x.ActiveMatchId
+	}
+	return ""
+}
+
+// Información de un jugador en cola
+type QueueInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	JoinTime      int64                  `protobuf:"varint,2,opt,name=join_time,json=joinTime,proto3" json:"join_time,omitempty"` // timestamp de unión a la cola
+	Position      int32                  `protobuf:"varint,3,opt,name=position,proto3" json:"position,omitempty"`                 // posición en la cola
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueueInfo) Reset() {
+	*x = QueueInfo{}
+	mi := &file_sistema_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueueInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueueInfo) ProtoMessage() {}
+
+func (x *QueueInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueueInfo.ProtoReflect.Descriptor instead.
+func (*QueueInfo) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *QueueInfo) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *QueueInfo) GetJoinTime() int64 {
+	if x != nil {
+		return x.JoinTime
+	}
+	return 0
+}
+
+func (x *QueueInfo) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
+}
+
+// Solicitud para actualizar el estado de un servidor
+type AdminServerUpdateRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AdminId        string                 `protobuf:"bytes,1,opt,name=admin_id,json=adminId,proto3" json:"admin_id,omitempty"`
+	ServerId       string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	NewStatus      string                 `protobuf:"bytes,3,opt,name=new_status,json=newStatus,proto3" json:"new_status,omitempty"` // "DISPONIBLE", "OCUPADO", "CAIDO", "RESET"
+	RelojVectorial map[string]int32       `protobuf:"bytes,4,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AdminServerUpdateRequest) Reset() {
+	*x = AdminServerUpdateRequest{}
+	mi := &file_sistema_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminServerUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminServerUpdateRequest) ProtoMessage() {}
+
+func (x *AdminServerUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminServerUpdateRequest.ProtoReflect.Descriptor instead.
+func (*AdminServerUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *AdminServerUpdateRequest) GetAdminId() string {
+	if x != nil {
+		return x.AdminId
+	}
+	return ""
+}
+
+func (x *AdminServerUpdateRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *AdminServerUpdateRequest) GetNewStatus() string {
+	if x != nil {
+		return x.NewStatus
+	}
+	return ""
+}
+
+func (x *AdminServerUpdateRequest) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Respuesta a la solicitud de actualización
+type AdminUpdateResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	StatusCode     int32                  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	Message        string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,3,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AdminUpdateResponse) Reset() {
+	*x = AdminUpdateResponse{}
+	mi := &file_sistema_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminUpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminUpdateResponse) ProtoMessage() {}
+
+func (x *AdminUpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminUpdateResponse.ProtoReflect.Descriptor instead.
+func (*AdminUpdateResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AdminUpdateResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *AdminUpdateResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *AdminUpdateResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
 var File_sistema_proto protoreflect.FileDescriptor
 
 const file_sistema_proto_rawDesc = "" +
@@ -1315,6 +1721,51 @@ const file_sistema_proto_rawDesc = "" +
 	"\x0freloj_vectorial\x18\x03 \x03(\v20.sistema.MatchResultResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
 	"\x13RelojVectorialEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xc0\x01\n" +
+	"\fAdminRequest\x12\x19\n" +
+	"\badmin_id\x18\x01 \x01(\tR\aadminId\x12R\n" +
+	"\x0freloj_vectorial\x18\x02 \x03(\v2).sistema.AdminRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\x8f\x03\n" +
+	"\x14SystemStatusResponse\x12/\n" +
+	"\aservers\x18\x01 \x03(\v2\x15.sistema.ServerStatusR\aservers\x127\n" +
+	"\rqueue_players\x18\x02 \x03(\v2\x12.sistema.QueueInfoR\fqueuePlayers\x123\n" +
+	"\factive_games\x18\x03 \x03(\v2\x10.sistema.PartidaR\vactiveGames\x12Z\n" +
+	"\x0freloj_vectorial\x18\x04 \x03(\v21.sistema.SystemStatusResponse.RelojVectorialEntryR\x0erelojVectorial\x12\x1f\n" +
+	"\vstatus_code\x18\x05 \x01(\x05R\n" +
+	"statusCode\x12\x18\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xa6\x01\n" +
+	"\fServerStatus\x12\x1b\n" +
+	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1f\n" +
+	"\vlast_update\x18\x04 \x01(\x03R\n" +
+	"lastUpdate\x12&\n" +
+	"\x0factive_match_id\x18\x05 \x01(\tR\ractiveMatchId\"a\n" +
+	"\tQueueInfo\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1b\n" +
+	"\tjoin_time\x18\x02 \x01(\x03R\bjoinTime\x12\x1a\n" +
+	"\bposition\x18\x03 \x01(\x05R\bposition\"\x94\x02\n" +
+	"\x18AdminServerUpdateRequest\x12\x19\n" +
+	"\badmin_id\x18\x01 \x01(\tR\aadminId\x12\x1b\n" +
+	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12\x1d\n" +
+	"\n" +
+	"new_status\x18\x03 \x01(\tR\tnewStatus\x12^\n" +
+	"\x0freloj_vectorial\x18\x04 \x03(\v25.sistema.AdminServerUpdateRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xee\x01\n" +
+	"\x13AdminUpdateResponse\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12Y\n" +
+	"\x0freloj_vectorial\x18\x03 \x03(\v20.sistema.AdminUpdateResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x012\x80\x02\n" +
 	"\n" +
 	"Matchmaker\x12I\n" +
@@ -1326,7 +1777,10 @@ const file_sistema_proto_rawDesc = "" +
 	"\x14ObtenerEstadoPartida\x12\x1d.sistema.EstadoPartidaRequest\x1a\x1e.sistema.EstadoPartidaResponse\"\x002\xcb\x01\n" +
 	"\x11MatchmakerService\x12_\n" +
 	"\x12UpdateServerStatus\x12\".sistema.ServerStatusUpdateRequest\x1a#.sistema.ServerStatusUpdateResponse\"\x00\x12U\n" +
-	"\x11NotifyMatchResult\x12 .sistema.MatchResultNotification\x1a\x1c.sistema.MatchResultResponse\"\x00B\x13Z\x11grpc-server/protob\x06proto3"
+	"\x11NotifyMatchResult\x12 .sistema.MatchResultNotification\x1a\x1c.sistema.MatchResultResponse\"\x002\xbb\x01\n" +
+	"\fAdminService\x12N\n" +
+	"\x14AdminGetSystemStatus\x12\x15.sistema.AdminRequest\x1a\x1d.sistema.SystemStatusResponse\"\x00\x12[\n" +
+	"\x16AdminUpdateServerState\x12!.sistema.AdminServerUpdateRequest\x1a\x1c.sistema.AdminUpdateResponse\"\x00B\x13Z\x11grpc-server/protob\x06proto3"
 
 var (
 	file_sistema_proto_rawDescOnce sync.Once
@@ -1340,7 +1794,7 @@ func file_sistema_proto_rawDescGZIP() []byte {
 	return file_sistema_proto_rawDescData
 }
 
-var file_sistema_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_sistema_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
 var file_sistema_proto_goTypes = []any{
 	(*PlayerInfoRequest)(nil),          // 0: sistema.PlayerInfoRequest
 	(*QueuePlayerResponse)(nil),        // 1: sistema.QueuePlayerResponse
@@ -1359,61 +1813,82 @@ var file_sistema_proto_goTypes = []any{
 	(*ServerStatusUpdateResponse)(nil), // 14: sistema.ServerStatusUpdateResponse
 	(*MatchResultNotification)(nil),    // 15: sistema.MatchResultNotification
 	(*MatchResultResponse)(nil),        // 16: sistema.MatchResultResponse
-	nil,                                // 17: sistema.PlayerInfoRequest.RelojVectorialEntry
-	nil,                                // 18: sistema.QueuePlayerResponse.RelojVectorialEntry
-	nil,                                // 19: sistema.PlayerStatusRequest.RelojVectorialEntry
-	nil,                                // 20: sistema.PlayerStatusResponse.RelojVectorialEntry
-	nil,                                // 21: sistema.SincronizacionRequest.RelojVectorialEntry
-	nil,                                // 22: sistema.SincronizacionResponse.RelojVectorialEntry
-	nil,                                // 23: sistema.ConexionRequest.RelojVectorialEntry
-	nil,                                // 24: sistema.ConexionResponse.RelojVectorialEntry
-	nil,                                // 25: sistema.AssignMatchRequest.RelojVectorialEntry
-	nil,                                // 26: sistema.AssignMatchResponse.RelojVectorialEntry
-	nil,                                // 27: sistema.EstadoPartidaRequest.RelojVectorialEntry
-	nil,                                // 28: sistema.EstadoPartidaResponse.RelojVectorialEntry
-	nil,                                // 29: sistema.ServerStatusUpdateRequest.RelojVectorialEntry
-	nil,                                // 30: sistema.ServerStatusUpdateResponse.RelojVectorialEntry
-	nil,                                // 31: sistema.MatchResultNotification.RelojVectorialEntry
-	nil,                                // 32: sistema.MatchResultResponse.RelojVectorialEntry
+	(*AdminRequest)(nil),               // 17: sistema.AdminRequest
+	(*SystemStatusResponse)(nil),       // 18: sistema.SystemStatusResponse
+	(*ServerStatus)(nil),               // 19: sistema.ServerStatus
+	(*QueueInfo)(nil),                  // 20: sistema.QueueInfo
+	(*AdminServerUpdateRequest)(nil),   // 21: sistema.AdminServerUpdateRequest
+	(*AdminUpdateResponse)(nil),        // 22: sistema.AdminUpdateResponse
+	nil,                                // 23: sistema.PlayerInfoRequest.RelojVectorialEntry
+	nil,                                // 24: sistema.QueuePlayerResponse.RelojVectorialEntry
+	nil,                                // 25: sistema.PlayerStatusRequest.RelojVectorialEntry
+	nil,                                // 26: sistema.PlayerStatusResponse.RelojVectorialEntry
+	nil,                                // 27: sistema.SincronizacionRequest.RelojVectorialEntry
+	nil,                                // 28: sistema.SincronizacionResponse.RelojVectorialEntry
+	nil,                                // 29: sistema.ConexionRequest.RelojVectorialEntry
+	nil,                                // 30: sistema.ConexionResponse.RelojVectorialEntry
+	nil,                                // 31: sistema.AssignMatchRequest.RelojVectorialEntry
+	nil,                                // 32: sistema.AssignMatchResponse.RelojVectorialEntry
+	nil,                                // 33: sistema.EstadoPartidaRequest.RelojVectorialEntry
+	nil,                                // 34: sistema.EstadoPartidaResponse.RelojVectorialEntry
+	nil,                                // 35: sistema.ServerStatusUpdateRequest.RelojVectorialEntry
+	nil,                                // 36: sistema.ServerStatusUpdateResponse.RelojVectorialEntry
+	nil,                                // 37: sistema.MatchResultNotification.RelojVectorialEntry
+	nil,                                // 38: sistema.MatchResultResponse.RelojVectorialEntry
+	nil,                                // 39: sistema.AdminRequest.RelojVectorialEntry
+	nil,                                // 40: sistema.SystemStatusResponse.RelojVectorialEntry
+	nil,                                // 41: sistema.AdminServerUpdateRequest.RelojVectorialEntry
+	nil,                                // 42: sistema.AdminUpdateResponse.RelojVectorialEntry
 }
 var file_sistema_proto_depIdxs = []int32{
-	17, // 0: sistema.PlayerInfoRequest.reloj_vectorial:type_name -> sistema.PlayerInfoRequest.RelojVectorialEntry
-	18, // 1: sistema.QueuePlayerResponse.reloj_vectorial:type_name -> sistema.QueuePlayerResponse.RelojVectorialEntry
-	19, // 2: sistema.PlayerStatusRequest.reloj_vectorial:type_name -> sistema.PlayerStatusRequest.RelojVectorialEntry
+	23, // 0: sistema.PlayerInfoRequest.reloj_vectorial:type_name -> sistema.PlayerInfoRequest.RelojVectorialEntry
+	24, // 1: sistema.QueuePlayerResponse.reloj_vectorial:type_name -> sistema.QueuePlayerResponse.RelojVectorialEntry
+	25, // 2: sistema.PlayerStatusRequest.reloj_vectorial:type_name -> sistema.PlayerStatusRequest.RelojVectorialEntry
 	6,  // 3: sistema.PlayerStatusResponse.partidas:type_name -> sistema.Partida
-	20, // 4: sistema.PlayerStatusResponse.reloj_vectorial:type_name -> sistema.PlayerStatusResponse.RelojVectorialEntry
-	21, // 5: sistema.SincronizacionRequest.reloj_vectorial:type_name -> sistema.SincronizacionRequest.RelojVectorialEntry
-	22, // 6: sistema.SincronizacionResponse.reloj_vectorial:type_name -> sistema.SincronizacionResponse.RelojVectorialEntry
-	23, // 7: sistema.ConexionRequest.reloj_vectorial:type_name -> sistema.ConexionRequest.RelojVectorialEntry
-	24, // 8: sistema.ConexionResponse.reloj_vectorial:type_name -> sistema.ConexionResponse.RelojVectorialEntry
+	26, // 4: sistema.PlayerStatusResponse.reloj_vectorial:type_name -> sistema.PlayerStatusResponse.RelojVectorialEntry
+	27, // 5: sistema.SincronizacionRequest.reloj_vectorial:type_name -> sistema.SincronizacionRequest.RelojVectorialEntry
+	28, // 6: sistema.SincronizacionResponse.reloj_vectorial:type_name -> sistema.SincronizacionResponse.RelojVectorialEntry
+	29, // 7: sistema.ConexionRequest.reloj_vectorial:type_name -> sistema.ConexionRequest.RelojVectorialEntry
+	30, // 8: sistema.ConexionResponse.reloj_vectorial:type_name -> sistema.ConexionResponse.RelojVectorialEntry
 	6,  // 9: sistema.ConexionResponse.partidas:type_name -> sistema.Partida
-	25, // 10: sistema.AssignMatchRequest.reloj_vectorial:type_name -> sistema.AssignMatchRequest.RelojVectorialEntry
-	26, // 11: sistema.AssignMatchResponse.reloj_vectorial:type_name -> sistema.AssignMatchResponse.RelojVectorialEntry
-	27, // 12: sistema.EstadoPartidaRequest.reloj_vectorial:type_name -> sistema.EstadoPartidaRequest.RelojVectorialEntry
-	28, // 13: sistema.EstadoPartidaResponse.reloj_vectorial:type_name -> sistema.EstadoPartidaResponse.RelojVectorialEntry
-	29, // 14: sistema.ServerStatusUpdateRequest.reloj_vectorial:type_name -> sistema.ServerStatusUpdateRequest.RelojVectorialEntry
-	30, // 15: sistema.ServerStatusUpdateResponse.reloj_vectorial:type_name -> sistema.ServerStatusUpdateResponse.RelojVectorialEntry
-	31, // 16: sistema.MatchResultNotification.reloj_vectorial:type_name -> sistema.MatchResultNotification.RelojVectorialEntry
-	32, // 17: sistema.MatchResultResponse.reloj_vectorial:type_name -> sistema.MatchResultResponse.RelojVectorialEntry
-	0,  // 18: sistema.Matchmaker.QueuePlayer:input_type -> sistema.PlayerInfoRequest
-	2,  // 19: sistema.Matchmaker.GetPlayerStatus:input_type -> sistema.PlayerStatusRequest
-	4,  // 20: sistema.Matchmaker.SincronizarReloj:input_type -> sistema.SincronizacionRequest
-	9,  // 21: sistema.PartidaService.AssignMatch:input_type -> sistema.AssignMatchRequest
-	11, // 22: sistema.PartidaService.ObtenerEstadoPartida:input_type -> sistema.EstadoPartidaRequest
-	13, // 23: sistema.MatchmakerService.UpdateServerStatus:input_type -> sistema.ServerStatusUpdateRequest
-	15, // 24: sistema.MatchmakerService.NotifyMatchResult:input_type -> sistema.MatchResultNotification
-	1,  // 25: sistema.Matchmaker.QueuePlayer:output_type -> sistema.QueuePlayerResponse
-	3,  // 26: sistema.Matchmaker.GetPlayerStatus:output_type -> sistema.PlayerStatusResponse
-	5,  // 27: sistema.Matchmaker.SincronizarReloj:output_type -> sistema.SincronizacionResponse
-	10, // 28: sistema.PartidaService.AssignMatch:output_type -> sistema.AssignMatchResponse
-	12, // 29: sistema.PartidaService.ObtenerEstadoPartida:output_type -> sistema.EstadoPartidaResponse
-	14, // 30: sistema.MatchmakerService.UpdateServerStatus:output_type -> sistema.ServerStatusUpdateResponse
-	16, // 31: sistema.MatchmakerService.NotifyMatchResult:output_type -> sistema.MatchResultResponse
-	25, // [25:32] is the sub-list for method output_type
-	18, // [18:25] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	31, // 10: sistema.AssignMatchRequest.reloj_vectorial:type_name -> sistema.AssignMatchRequest.RelojVectorialEntry
+	32, // 11: sistema.AssignMatchResponse.reloj_vectorial:type_name -> sistema.AssignMatchResponse.RelojVectorialEntry
+	33, // 12: sistema.EstadoPartidaRequest.reloj_vectorial:type_name -> sistema.EstadoPartidaRequest.RelojVectorialEntry
+	34, // 13: sistema.EstadoPartidaResponse.reloj_vectorial:type_name -> sistema.EstadoPartidaResponse.RelojVectorialEntry
+	35, // 14: sistema.ServerStatusUpdateRequest.reloj_vectorial:type_name -> sistema.ServerStatusUpdateRequest.RelojVectorialEntry
+	36, // 15: sistema.ServerStatusUpdateResponse.reloj_vectorial:type_name -> sistema.ServerStatusUpdateResponse.RelojVectorialEntry
+	37, // 16: sistema.MatchResultNotification.reloj_vectorial:type_name -> sistema.MatchResultNotification.RelojVectorialEntry
+	38, // 17: sistema.MatchResultResponse.reloj_vectorial:type_name -> sistema.MatchResultResponse.RelojVectorialEntry
+	39, // 18: sistema.AdminRequest.reloj_vectorial:type_name -> sistema.AdminRequest.RelojVectorialEntry
+	19, // 19: sistema.SystemStatusResponse.servers:type_name -> sistema.ServerStatus
+	20, // 20: sistema.SystemStatusResponse.queue_players:type_name -> sistema.QueueInfo
+	6,  // 21: sistema.SystemStatusResponse.active_games:type_name -> sistema.Partida
+	40, // 22: sistema.SystemStatusResponse.reloj_vectorial:type_name -> sistema.SystemStatusResponse.RelojVectorialEntry
+	41, // 23: sistema.AdminServerUpdateRequest.reloj_vectorial:type_name -> sistema.AdminServerUpdateRequest.RelojVectorialEntry
+	42, // 24: sistema.AdminUpdateResponse.reloj_vectorial:type_name -> sistema.AdminUpdateResponse.RelojVectorialEntry
+	0,  // 25: sistema.Matchmaker.QueuePlayer:input_type -> sistema.PlayerInfoRequest
+	2,  // 26: sistema.Matchmaker.GetPlayerStatus:input_type -> sistema.PlayerStatusRequest
+	4,  // 27: sistema.Matchmaker.SincronizarReloj:input_type -> sistema.SincronizacionRequest
+	9,  // 28: sistema.PartidaService.AssignMatch:input_type -> sistema.AssignMatchRequest
+	11, // 29: sistema.PartidaService.ObtenerEstadoPartida:input_type -> sistema.EstadoPartidaRequest
+	13, // 30: sistema.MatchmakerService.UpdateServerStatus:input_type -> sistema.ServerStatusUpdateRequest
+	15, // 31: sistema.MatchmakerService.NotifyMatchResult:input_type -> sistema.MatchResultNotification
+	17, // 32: sistema.AdminService.AdminGetSystemStatus:input_type -> sistema.AdminRequest
+	21, // 33: sistema.AdminService.AdminUpdateServerState:input_type -> sistema.AdminServerUpdateRequest
+	1,  // 34: sistema.Matchmaker.QueuePlayer:output_type -> sistema.QueuePlayerResponse
+	3,  // 35: sistema.Matchmaker.GetPlayerStatus:output_type -> sistema.PlayerStatusResponse
+	5,  // 36: sistema.Matchmaker.SincronizarReloj:output_type -> sistema.SincronizacionResponse
+	10, // 37: sistema.PartidaService.AssignMatch:output_type -> sistema.AssignMatchResponse
+	12, // 38: sistema.PartidaService.ObtenerEstadoPartida:output_type -> sistema.EstadoPartidaResponse
+	14, // 39: sistema.MatchmakerService.UpdateServerStatus:output_type -> sistema.ServerStatusUpdateResponse
+	16, // 40: sistema.MatchmakerService.NotifyMatchResult:output_type -> sistema.MatchResultResponse
+	18, // 41: sistema.AdminService.AdminGetSystemStatus:output_type -> sistema.SystemStatusResponse
+	22, // 42: sistema.AdminService.AdminUpdateServerState:output_type -> sistema.AdminUpdateResponse
+	34, // [34:43] is the sub-list for method output_type
+	25, // [25:34] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_sistema_proto_init() }
@@ -1427,9 +1902,9 @@ func file_sistema_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sistema_proto_rawDesc), len(file_sistema_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   43,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   4,
 		},
 		GoTypes:           file_sistema_proto_goTypes,
 		DependencyIndexes: file_sistema_proto_depIdxs,

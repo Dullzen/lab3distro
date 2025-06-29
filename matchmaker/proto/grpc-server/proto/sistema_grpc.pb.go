@@ -501,3 +501,151 @@ var MatchmakerService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sistema.proto",
 }
+
+const (
+	AdminService_AdminGetSystemStatus_FullMethodName   = "/sistema.AdminService/AdminGetSystemStatus"
+	AdminService_AdminUpdateServerState_FullMethodName = "/sistema.AdminService/AdminUpdateServerState"
+)
+
+// AdminServiceClient is the client API for AdminService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Servicio de administración para el matchmaker
+type AdminServiceClient interface {
+	// Obtener una vista completa del estado del sistema
+	AdminGetSystemStatus(ctx context.Context, in *AdminRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error)
+	// Modificar el estado de un servidor
+	AdminUpdateServerState(ctx context.Context, in *AdminServerUpdateRequest, opts ...grpc.CallOption) (*AdminUpdateResponse, error)
+}
+
+type adminServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAdminServiceClient(cc grpc.ClientConnInterface) AdminServiceClient {
+	return &adminServiceClient{cc}
+}
+
+func (c *adminServiceClient) AdminGetSystemStatus(ctx context.Context, in *AdminRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SystemStatusResponse)
+	err := c.cc.Invoke(ctx, AdminService_AdminGetSystemStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) AdminUpdateServerState(ctx context.Context, in *AdminServerUpdateRequest, opts ...grpc.CallOption) (*AdminUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminUpdateResponse)
+	err := c.cc.Invoke(ctx, AdminService_AdminUpdateServerState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AdminServiceServer is the server API for AdminService service.
+// All implementations must embed UnimplementedAdminServiceServer
+// for forward compatibility.
+//
+// Servicio de administración para el matchmaker
+type AdminServiceServer interface {
+	// Obtener una vista completa del estado del sistema
+	AdminGetSystemStatus(context.Context, *AdminRequest) (*SystemStatusResponse, error)
+	// Modificar el estado de un servidor
+	AdminUpdateServerState(context.Context, *AdminServerUpdateRequest) (*AdminUpdateResponse, error)
+	mustEmbedUnimplementedAdminServiceServer()
+}
+
+// UnimplementedAdminServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedAdminServiceServer struct{}
+
+func (UnimplementedAdminServiceServer) AdminGetSystemStatus(context.Context, *AdminRequest) (*SystemStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminGetSystemStatus not implemented")
+}
+func (UnimplementedAdminServiceServer) AdminUpdateServerState(context.Context, *AdminServerUpdateRequest) (*AdminUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminUpdateServerState not implemented")
+}
+func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
+func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
+
+// UnsafeAdminServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AdminServiceServer will
+// result in compilation errors.
+type UnsafeAdminServiceServer interface {
+	mustEmbedUnimplementedAdminServiceServer()
+}
+
+func RegisterAdminServiceServer(s grpc.ServiceRegistrar, srv AdminServiceServer) {
+	// If the following call pancis, it indicates UnimplementedAdminServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&AdminService_ServiceDesc, srv)
+}
+
+func _AdminService_AdminGetSystemStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).AdminGetSystemStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_AdminGetSystemStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).AdminGetSystemStatus(ctx, req.(*AdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_AdminUpdateServerState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminServerUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).AdminUpdateServerState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_AdminUpdateServerState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).AdminUpdateServerState(ctx, req.(*AdminServerUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AdminService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "sistema.AdminService",
+	HandlerType: (*AdminServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AdminGetSystemStatus",
+			Handler:    _AdminService_AdminGetSystemStatus_Handler,
+		},
+		{
+			MethodName: "AdminUpdateServerState",
+			Handler:    _AdminService_AdminUpdateServerState_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "sistema.proto",
+}
