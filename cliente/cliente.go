@@ -114,79 +114,69 @@ func mostrarPartidas(partidas []*pb.Partida) {
 
 	fmt.Println("\n=== LISTADO DE PARTIDAS ===")
 
-	// Crear un mapa para organizar partidas por servidor y por ID
-	partidasPorServidor := make(map[string]*pb.Partida)
-	partidasPorID := make(map[string]*pb.Partida)
+	// Paso 1: Crear un mapa para las partidas vacías por ID de servidor
+	servidoresVacios := make(map[string]*pb.Partida)
 
-	// Organizar partidas tanto por servidor como por ID
+	// Paso 2: Crear un mapa de partidas activas por servidor (donde se ejecutan)
+	partidasActivas := make(map[string]*pb.Partida)
+
+	// Organizar partidas: primero identificar partidas vacías
 	for _, p := range partidas {
-		partidasPorID[p.Id] = p
-
-		// Si tiene ServidorId, también guardar referencia
-		if p.ServidorId != "" {
-			partidasPorServidor[p.ServidorId] = p
+		if len(p.Clientes) == 0 {
+			servidoresVacios[p.Id] = p
 		}
 	}
 
-	// Ordenar IDs para mostrar siempre en el mismo orden
-	servidores := []string{"Partida-1", "Partida-2", "Partida-3"}
-
-	// Mostrar partidas según el orden de servidores
-	for i, servidorID := range servidores {
-		var p *pb.Partida
-		var partidaInfo string
-
-		// Revisar si hay una partida ejecutándose en este servidor
-		partidaServidor, existeEnServidor := partidasPorServidor[servidorID]
-
-		// También revisar si hay una partida con este ID
-		partidaID, existePorID := partidasPorID[servidorID]
-
-		// Priorizar partida que se ejecuta en el servidor sobre partida que solo tiene ese ID
-		if existeEnServidor {
-			p = partidaServidor
-
-			estado := p.Estado
-			if estado == "" {
-				estado = "Esperando"
+	// Luego identificar partidas con jugadores y asignarlas al servidor donde se ejecutan
+	for _, p := range partidas {
+		if len(p.Clientes) > 0 {
+			// Si tiene ServidorId, la partida se está ejecutando en ese servidor
+			if p.ServidorId != "" {
+				partidasActivas[p.ServidorId] = p
+			} else {
+				// Si no tiene ServidorId, se ejecuta en su propio ID
+				partidasActivas[p.Id] = p
 			}
-
-			status := "Disponible"
-			if p.Llena {
-				status = "Llena"
-			}
-
-			partidaInfo = fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
-				i+1, servidorID, estado, status, strings.Join(p.Clientes, ", "))
-
-			if estado == "Finalizada" && p.Ganador != "" {
-				partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
-			}
-		} else if existePorID {
-			p = partidaID
-
-			estado := p.Estado
-			if estado == "" {
-				estado = "Esperando"
-			}
-
-			status := "Disponible"
-			if p.Llena {
-				status = "Llena"
-			}
-
-			partidaInfo = fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
-				i+1, servidorID, estado, status, strings.Join(p.Clientes, ", "))
-
-			if estado == "Finalizada" && p.Ganador != "" {
-				partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
-			}
-		} else {
-			// Si no hay partida para este servidor, mostrar un placeholder
-			partidaInfo = fmt.Sprintf("%d. %s (Estado: No disponible) - Jugadores:", i+1, servidorID)
 		}
+	}
 
-		fmt.Println(partidaInfo)
+	// Mostrar partidas en orden específico
+	servidores := []string{"Partida-1", "Partida-2", "Partida-3"}
+	for i, servidorID := range servidores {
+		// Verificar si hay una partida ejecutándose en este servidor
+		if p, existe := partidasActivas[servidorID]; existe {
+			// Mostrar la partida activa en este servidor
+			estado := p.Estado
+			if estado == "" {
+				estado = "Esperando"
+			}
+
+			status := "Disponible"
+			if p.Llena {
+				status = "Llena"
+			}
+
+			partidaInfo := fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
+				i+1, servidorID, estado, status, strings.Join(p.Clientes, ", "))
+
+			if estado == "Finalizada" && p.Ganador != "" {
+				partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
+			}
+
+			fmt.Println(partidaInfo)
+		} else if p, existe := servidoresVacios[servidorID]; existe {
+			// Si no hay partida activa, pero existe el servidor vacío
+			estado := p.Estado
+			if estado == "" {
+				estado = "Esperando"
+			}
+
+			fmt.Printf("%d. %s (Estado: %s, Disponible) - Jugadores:\n",
+				i+1, servidorID, estado)
+		} else {
+			// No hay información sobre este servidor
+			fmt.Printf("%d. %s (Estado: No disponible) - Jugadores:\n", i+1, servidorID)
+		}
 	}
 	fmt.Println("========================")
 }
@@ -236,7 +226,10 @@ func queuePlayer(client pb.MatchmakerClient, clienteID string, vectorClock *Vect
 }
 
 // Función para consultar el estado del jugador
-func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool) {
+func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool, mostrarListado bool, estadoAnterior *string, enPartidaAnterior *bool) {
+	// Guardar valores anteriores
+	estabaEnPartida := *enPartidaAnterior
+
 	// Incrementar el reloj vectorial antes de enviar un mensaje
 	vectorClock.Increment(clienteID)
 
@@ -261,12 +254,39 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 	// Actualizar nuestro reloj vectorial con la respuesta
 	vectorClock.Update(resp.RelojVectorial)
 
+	// Detectar transición de estado
+	enPartida := resp.PartidaId != ""
+	// Detectar finalización implícita (transición de IN_MATCH a IDLE)
+	if estabaEnPartida && !enPartida && resp.PlayerStatus == "IDLE" {
+		// Buscar al cliente en alguna partida finalizada
+		partidaFinalizada := false
+		for _, p := range resp.Partidas {
+			if p.Estado == "Finalizada" {
+				for _, c := range p.Clientes {
+					if c == clienteID {
+						partidaFinalizada = true
+						break
+					}
+				}
+			}
+		}
+
+		if partidaFinalizada {
+			resp.PlayerStatus = "MATCH_COMPLETED" // Forzar el estado para detener consultas
+			fmt.Printf("[%s] Detectada finalización de partida (transición de IN_MATCH a IDLE)\n", clienteID)
+		}
+	}
+
+	// Actualizar valores para la próxima llamada
+	*estadoAnterior = resp.PlayerStatus
+	*enPartidaAnterior = resp.PartidaId != ""
+
 	// Mostrar respuesta
 	fmt.Printf("[%s] Estado actual: %s\n", clienteID, resp.PlayerStatus)
 	fmt.Printf("[%s] %s\n", clienteID, resp.Mensaje)
 
-	// Si recibimos información de partidas, mostrarla
-	if len(resp.Partidas) > 0 {
+	// Si recibimos información de partidas y se debe mostrar el listado, mostrarlo
+	if len(resp.Partidas) > 0 && mostrarListado {
 		mostrarPartidas(resp.Partidas)
 	}
 
@@ -323,6 +343,13 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 					}
 				}
 			}
+
+			// NUEVA CONDICIÓN: Si el cliente estaba en una partida y ahora está en IDLE, considerar finalizada
+			if estabaEnPartida && !enPartida {
+				fmt.Printf("[%s] Deteniendo consultas automáticas. Transición de IN_MATCH a IDLE.\n", clienteID)
+				*detenerConsulta = true
+				return
+			}
 		}
 	}
 
@@ -331,19 +358,19 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 
 // Función para consultar periódicamente el estado del jugador
 func consultarEstadoPeriodicamente(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, segundos int, detener *bool) {
-	for i := 0; i < segundos && !*detener; i++ {
-		time.Sleep(5 * time.Second) // Consultar cada 5 segundos
+	var estadoAnterior string
+	var enPartidaAnterior bool
 
-		// Verificar nuevamente para salir rápido si se ha solicitado detener
+	for i := 0; i < segundos && !*detener; i++ {
+		time.Sleep(5 * time.Second)
+
 		if *detener {
 			fmt.Printf("[%s] Deteniendo consultas periódicas según lo solicitado.\n", clienteID)
 			return
 		}
 
 		fmt.Printf("\n[%s] Consultando estado automáticamente...\n", clienteID)
-
-		// Consultar estado
-		getPlayerStatus(client, clienteID, vectorClock, detener)
+		getPlayerStatus(client, clienteID, vectorClock, detener, false, &estadoAnterior, &enPartidaAnterior)
 	}
 }
 
@@ -419,6 +446,8 @@ func main() {
 	// Variables para control de consulta periódica
 	consultando := false
 	detenerConsulta := false
+	var estadoAnterior string
+	var enPartidaAnterior bool
 
 	// Bucle principal del menú
 	for {
@@ -438,7 +467,7 @@ func main() {
 
 		case 2:
 			fmt.Printf("[%s] Solicitando estado actual...\n", clienteID)
-			getPlayerStatus(client, clienteID, vectorClock, &detenerConsulta)
+			getPlayerStatus(client, clienteID, vectorClock, &detenerConsulta, true, &estadoAnterior, &enPartidaAnterior)
 
 			// Si estamos consultando periódicamente y recibimos MATCH_COMPLETED,
 			// actualizar también la variable de control

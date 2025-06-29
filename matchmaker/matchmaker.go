@@ -42,8 +42,9 @@ type Partida struct {
 	Clientes   []string
 	Estado     EstadoPartida
 	Resultado  *ResultadoPartida
-	ServidorID string // Añadir campo para el ID del servidor que ejecuta la partida
-	mutex      sync.RWMutex
+	ServidorID string // ID del servidor que ejecuta esta partida
+	// No duplicar la información en otra partida
+	mutex sync.RWMutex
 }
 
 // Verificar si la partida está llena
@@ -140,6 +141,8 @@ func (p *Partida) ToProto() *pb.Partida {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
+	// Si esta partida está siendo ejecutada por un servidor externo,
+	// indicamos esto pero no creamos una entrada duplicada
 	partidaProto := &pb.Partida{
 		Id:         p.ID,
 		Clientes:   append([]string{}, p.Clientes...), // Crear una copia
@@ -148,7 +151,6 @@ func (p *Partida) ToProto() *pb.Partida {
 		ServidorId: p.ServidorID, // Añadir el ID del servidor a la respuesta
 	}
 
-	// Si hay un resultado, incluirlo
 	if p.Resultado != nil {
 		partidaProto.Ganador = p.Resultado.Ganador
 		partidaProto.Perdedor = p.Resultado.Perdedor
@@ -265,10 +267,24 @@ func (s *server) obtenerTodasLasPartidas() []*Partida {
 	s.partidaMutex.RLock()
 	defer s.partidaMutex.RUnlock()
 
+	// Usar un mapa para detectar duplicados (mismo conjunto de jugadores)
+	vistas := make(map[string]bool)
 	var todas []*Partida
+
 	for _, p := range s.partidas {
-		todas = append(todas, p)
+		// Crear una clave única basada en los jugadores
+		jugadoresKey := strings.Join(p.Clientes, ",")
+
+		// Si la partida tiene jugadores y no hemos visto esta combinación antes
+		if len(p.Clientes) > 0 && !vistas[jugadoresKey] {
+			vistas[jugadoresKey] = true
+			todas = append(todas, p)
+		} else if len(p.Clientes) == 0 {
+			// Partidas vacías siempre se muestran
+			todas = append(todas, p)
+		}
 	}
+
 	return todas
 }
 
@@ -835,51 +851,35 @@ func (s *server) NotifyMatchResult(ctx context.Context, req *pb.MatchResultNotif
 	respClock := s.vectorClock.Get()
 	s.mutex.Unlock()
 
-	// Actualizar el estado de la partida en el matchmaker
+	// Actualizar tanto la partida lógica como la referencia al servidor
 	s.partidaMutex.Lock()
+
+	// Primero limpiar las referencias de clientePartida para ambos jugadores
+	delete(s.clientePartida, ganadorID)
+	delete(s.clientePartida, perdedorID)
+
+	// Luego actualizar la partida lógica
 	partida, existe := s.partidas[matchID]
-	if !existe {
-		s.partidaMutex.Unlock()
-		return &pb.MatchResultResponse{
-			StatusCode:     1,
-			Message:        "Partida no encontrada",
-			RelojVectorial: respClock,
-		}, nil
+	if existe {
+		partida.Estado = Finalizada
+		partida.Resultado = &ResultadoPartida{
+			Ganador:  ganadorID,
+			Perdedor: perdedorID,
+		}
 	}
-
-	// Actualizar estado y resultado
-	partida.Estado = Finalizada
-	partida.Resultado = &ResultadoPartida{
-		Ganador:  ganadorID,
-		Perdedor: perdedorID,
-	}
-
-	// Eliminar las asociaciones cliente-partida
-	for _, cliente := range partida.Clientes {
-		delete(s.clientePartida, cliente)
-	}
-
-	// Importante: marcar explícitamente que la partida ya no está disponible
-	// para evitar que sea reutilizada inmediatamente
-	partidaID := partida.ID
-
-	// Opcionalmente, renombrar la partida para evitar colisiones
-	nuevoID := fmt.Sprintf("%s-completed-%d", partidaID, time.Now().Unix())
-	s.partidas[nuevoID] = partida
-	delete(s.partidas, partidaID)
 
 	s.partidaMutex.Unlock()
 
 	// Crear nueva partida disponible con el ID original
 	s.partidaMutex.Lock()
-	s.partidas[partidaID] = &Partida{
-		ID:       partidaID,
+	s.partidas[matchID] = &Partida{
+		ID:       matchID,
 		Clientes: []string{},
 		Estado:   Esperando,
 	}
 	s.partidaMutex.Unlock()
 
-	log.Printf("Resultado de partida %s registrado y creada nueva partida con ID %s", nuevoID, partidaID)
+	log.Printf("Resultado de partida %s registrado y creada nueva partida con ID %s", matchID, matchID)
 
 	return &pb.MatchResultResponse{
 		StatusCode:     0,
