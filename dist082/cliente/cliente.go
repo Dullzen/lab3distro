@@ -346,7 +346,7 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 
 			// NUEVA CONDICIÓN: Si el cliente estaba en una partida y ahora está en IDLE, considerar finalizada
 			if estabaEnPartida && !enPartida {
-				fmt.Printf("[%s] Deteniendo consultas automáticas. Transición de IN_MATCH a IDLE.\n", clienteID)
+				fmt.Printf("[%s] PARTIDA FINALIZADA. (IN_MATCH a IDLE).\n", clienteID)
 				*detenerConsulta = true
 				return
 			}
