@@ -11,6 +11,51 @@ services:
     ports:
       - "50051:50051"
 
+  partida1:
+    build:
+      context: ./partidas
+      dockerfile: Dockerfile
+    container_name: partida1
+    environment:
+      - PARTIDA_ID=Partida-1
+      - PARTIDA_PORT=50052
+    networks:
+      - grpc-network
+    ports:
+      - "50052:50052"
+    depends_on:
+      - matchmaker
+
+  partida2:
+    build:
+      context: ./partidas
+      dockerfile: Dockerfile
+    container_name: partida2
+    environment:
+      - PARTIDA_ID=Partida-2
+      - PARTIDA_PORT=50053
+    networks:
+      - grpc-network
+    ports:
+      - "50053:50053"
+    depends_on:
+      - matchmaker
+
+  partida3:
+    build:
+      context: ./partidas
+      dockerfile: Dockerfile
+    container_name: partida3
+    environment:
+      - PARTIDA_ID=Partida-3
+      - PARTIDA_PORT=50054
+    networks:
+      - grpc-network
+    ports:
+      - "50054:50054"
+    depends_on:
+      - matchmaker
+
   cliente1:
     build:
       context: ./cliente

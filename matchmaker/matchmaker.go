@@ -13,6 +13,7 @@ import (
 	pb "matchmaker/proto/grpc-server/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Dirección del servidor
@@ -37,11 +38,12 @@ type ResultadoPartida struct {
 
 // Estructura para representar una partida
 type Partida struct {
-	ID        string
-	Clientes  []string
-	Estado    EstadoPartida
-	Resultado *ResultadoPartida
-	mutex     sync.RWMutex
+	ID         string
+	Clientes   []string
+	Estado     EstadoPartida
+	Resultado  *ResultadoPartida
+	ServidorID string // Añadir campo para el ID del servidor que ejecuta la partida
+	mutex      sync.RWMutex
 }
 
 // Verificar si la partida está llena
@@ -139,10 +141,11 @@ func (p *Partida) ToProto() *pb.Partida {
 	defer p.mutex.RUnlock()
 
 	partidaProto := &pb.Partida{
-		Id:       p.ID,
-		Clientes: append([]string{}, p.Clientes...), // Crear una copia
-		Llena:    len(p.Clientes) >= 2,
-		Estado:   string(p.Estado),
+		Id:         p.ID,
+		Clientes:   append([]string{}, p.Clientes...), // Crear una copia
+		Llena:      len(p.Clientes) >= 2,
+		Estado:     string(p.Estado),
+		ServidorId: p.ServidorID, // Añadir el ID del servidor a la respuesta
 	}
 
 	// Si hay un resultado, incluirlo
@@ -206,11 +209,16 @@ func (vc *VectorClock) Update(other map[string]int32) {
 // Servidor implementando la interfaz definida en proto
 type server struct {
 	pb.UnimplementedMatchmakerServer
-	vectorClock    *VectorClock
-	partidas       map[string]*Partida
-	clientePartida map[string]string // Mapea clientes a sus partidas
-	mutex          sync.Mutex
-	partidaMutex   sync.RWMutex
+	pb.UnimplementedMatchmakerServiceServer // Añadir esta línea
+	vectorClock                             *VectorClock
+	partidas                                map[string]*Partida
+	clientePartida                          map[string]string // Mapea clientes a sus partidas
+	mutex                                   sync.Mutex
+	partidaMutex                            sync.RWMutex
+
+	// Registrar servidor de partidas
+	servidoresPartidas map[string]*ServidorPartida // ID del servidor -> info del servidor
+	servidoresMutex    sync.RWMutex
 }
 
 // Crear nuevas partidas iniciales
@@ -268,11 +276,21 @@ func (s *server) obtenerTodasLasPartidas() []*Partida {
 func (s *server) asignarClienteAPartida(clienteID string) (string, bool) {
 	// Verificar si el cliente ya está inscrito
 	if s.clienteYaInscrito(clienteID) {
+		log.Printf("Cliente %s ya está inscrito en una partida", clienteID)
 		return "", false
 	}
 
-	disponibles := s.obtenerPartidasDisponibles()
+	// Obtener partidas realmente disponibles (verificación adicional)
+	s.partidaMutex.RLock()
+	var disponibles []*Partida
+	for _, p := range s.partidas {
+		if !p.EstaLlena() && p.Estado == Esperando {
+			disponibles = append(disponibles, p)
+		}
+	}
+	s.partidaMutex.RUnlock()
 
+	// Si no hay disponibles, crear nueva
 	if len(disponibles) == 0 {
 		// Crear una nueva partida si no hay disponibles
 		s.partidaMutex.Lock()
@@ -300,7 +318,110 @@ func (s *server) asignarClienteAPartida(clienteID string) (string, bool) {
 
 		// Si la partida está llena, iniciar simulación después de un breve periodo
 		if partidaElegida.EstaLlena() {
-			go s.simularPartidaDespuesDe(partidaElegida.ID, 5*time.Second)
+			// Reemplazar esta línea:
+			// go s.simularPartidaDespuesDe(partidaElegida.ID, 5*time.Second)
+
+			// Por esta lógica:
+			go func(partidaID string) {
+				// Buscar un servidor disponible inmediatamente
+				servidor, encontrado := s.obtenerServidorPartidaDisponible()
+				if !encontrado {
+					log.Printf("No hay servidores disponibles para la partida %s. Usando simulación local...", partidaID)
+					// Fallback a simulación local después de un breve periodo
+					time.Sleep(5 * time.Second)
+					s.realizarSimulacionLocal(partidaID)
+					return
+				}
+
+				log.Printf("Asignando partida %s a servidor externo %s en %s",
+					partidaID, servidor.ID, servidor.Address)
+
+				// Obtener los clientes de la partida
+				s.partidaMutex.RLock()
+				partida, existe := s.partidas[partidaID]
+				if !existe || len(partida.Clientes) != 2 {
+					s.partidaMutex.RUnlock()
+					return
+				}
+				clientes := append([]string{}, partida.Clientes...)
+				s.partidaMutex.RUnlock()
+
+				// Conectar al servidor de partidas
+				conn, err := grpc.Dial(
+					servidor.Address,
+					grpc.WithTransportCredentials(insecure.NewCredentials()),
+					grpc.WithBlock(),
+					grpc.WithTimeout(3*time.Second),
+				)
+
+				// Imprimir información de debug
+				log.Printf("Intentando conectar a servidor %s en dirección '%s'",
+					servidor.ID, servidor.Address)
+
+				if err != nil {
+					log.Printf("Error al conectar con servidor %s: %v", servidor.ID, err)
+					s.servidoresMutex.Lock()
+					s.servidoresPartidas[servidor.ID].Status = "CAIDO"
+					s.servidoresMutex.Unlock()
+
+					// Fallback a simulación local
+					time.Sleep(2 * time.Second)
+					s.realizarSimulacionLocal(partidaID)
+					return
+				}
+				defer conn.Close()
+
+				// Crear cliente gRPC y enviar solicitud
+				client := pb.NewPartidaServiceClient(conn)
+
+				// Incrementar el reloj vectorial
+				s.mutex.Lock()
+				s.vectorClock.Increment("Matchmaker")
+				respClock := s.vectorClock.Get()
+				s.mutex.Unlock()
+
+				// Crear solicitud
+				req := &pb.AssignMatchRequest{
+					MatchId:        partidaID,
+					PlayerIds:      clientes,
+					RelojVectorial: respClock,
+				}
+
+				// Enviar solicitud con timeout
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
+				resp, err := client.AssignMatch(ctx, req)
+				if err != nil {
+					log.Printf("ERROR: No se pudo asignar partida %s a servidor %s: %v",
+						partidaID, servidor.ID, err)
+
+					// Fallback a simulación local
+					time.Sleep(2 * time.Second)
+					s.realizarSimulacionLocal(partidaID)
+					return
+				}
+
+				// Actualizar reloj vectorial con la respuesta
+				s.mutex.Lock()
+				s.vectorClock.Update(resp.GetRelojVectorial())
+				s.mutex.Unlock()
+
+				// Al enviar AssignMatchRequest y recibir respuesta exitosa, actualizar el campo ServidorID
+				if err == nil && resp.StatusCode == 0 {
+					s.partidaMutex.Lock()
+					if partida, existe := s.partidas[partidaID]; existe {
+						partida.ServidorID = servidor.ID
+						log.Printf("Partida %s asignada y vinculada al servidor %s",
+							partidaID, servidor.ID)
+					}
+					s.partidaMutex.Unlock()
+				}
+
+				log.Printf("Partida %s asignada correctamente a servidor %s (código: %d, mensaje: %s)",
+					partidaID, servidor.ID, resp.GetStatusCode(), resp.GetMessage())
+
+			}(partidaElegida.ID)
 		}
 
 		return partidaElegida.ID, true
@@ -309,32 +430,51 @@ func (s *server) asignarClienteAPartida(clienteID string) (string, bool) {
 	return "", false
 }
 
-// Simular una partida después de un tiempo determinado
-func (s *server) simularPartidaDespuesDe(partidaID string, delay time.Duration) {
-	time.Sleep(delay)
+// Función para obtener un servidor de partidas disponible
+func (s *server) obtenerServidorPartidaDisponible() (*ServidorPartida, bool) {
+	s.servidoresMutex.RLock()
+	defer s.servidoresMutex.RUnlock()
 
+	log.Printf("Buscando servidor de partidas disponible. Servidores registrados: %d", len(s.servidoresPartidas))
+
+	for id, sp := range s.servidoresPartidas {
+		log.Printf("Servidor %s tiene estado: %s", id, sp.Status)
+		if sp.Status == "DISPONIBLE" {
+			log.Printf("Usando servidor disponible: %s en %s", id, sp.Address)
+			return sp, true
+		}
+	}
+
+	log.Printf("No se encontró ningún servidor de partidas disponible")
+	return nil, false
+}
+
+// Simular una partida después de un tiempo determinado
+
+// Función auxiliar para realizar simulación local
+func (s *server) realizarSimulacionLocal(partidaID string) {
 	s.partidaMutex.Lock()
 	partida, existe := s.partidas[partidaID]
-	s.partidaMutex.Unlock()
 
-	if !existe {
+	if !existe || partida.Estado != EnCurso {
+		s.partidaMutex.Unlock()
 		return
 	}
 
-	log.Printf("¡Iniciando simulación de la partida %s!", partidaID)
+	log.Printf("Iniciando simulación local para partida %s", partidaID)
 	resultado := partida.SimularPartida()
 
 	if resultado != nil {
-		log.Printf("¡Partida %s finalizada! Ganador: %s, Perdedor: %s",
+		log.Printf("Partida %s finalizada localmente. Ganador: %s, Perdedor: %s",
 			partidaID, resultado.Ganador, resultado.Perdedor)
 
-		// Eliminar a los clientes de la partida en el mapa de clientePartida
-		s.partidaMutex.Lock()
+		// Eliminar a los jugadores de la partida del mapa clientePartida
 		for _, cliente := range partida.Clientes {
 			delete(s.clientePartida, cliente)
 		}
-		s.partidaMutex.Unlock()
 	}
+
+	s.partidaMutex.Unlock()
 }
 
 // Eliminar un cliente de su partida
@@ -578,32 +718,30 @@ func (s *server) GetPlayerStatus(ctx context.Context, req *pb.PlayerStatusReques
 	// Verificar si el cliente está en alguna partida
 	partida, enPartida := s.obtenerPartidaDeCliente(playerID)
 	if enPartida {
-		// Si está en partida, determinar su estado según el estado de la partida
-		switch partida.Estado {
-		case Esperando:
-			respuesta.PlayerStatus = "IN_QUEUE"
-			respuesta.Mensaje = fmt.Sprintf("Estás inscrito en la partida %s (Estado: %s)", partida.ID, partida.Estado)
-		case EnCurso:
-			respuesta.PlayerStatus = "IN_MATCH"
-			respuesta.Mensaje = fmt.Sprintf("Estás participando en la partida %s", partida.ID)
-		case Finalizada:
-			respuesta.PlayerStatus = "MATCH_COMPLETED"
-			// Si la partida finalizó, incluir el resultado
-			if partida.Resultado != nil {
-				if partida.Resultado.Ganador == playerID {
-					respuesta.Mensaje = fmt.Sprintf("¡Has GANADO la partida %s contra %s!",
-						partida.ID, partida.Resultado.Perdedor)
-					respuesta.Ganador = playerID
-					respuesta.Perdedor = partida.Resultado.Perdedor
-				} else {
-					respuesta.Mensaje = fmt.Sprintf("Has perdido la partida %s contra %s.",
-						partida.ID, partida.Resultado.Ganador)
-					respuesta.Ganador = partida.Resultado.Ganador
-					respuesta.Perdedor = playerID
-				}
+		// Verificación adicional para evitar referencias a partidas finalizadas
+		if partida.Estado == Finalizada {
+			log.Printf("ADVERTENCIA: El cliente %s aparece en una partida finalizada %s. Corrigiendo...",
+				playerID, partida.ID)
+			// Eliminar la asociación incorrecta
+			s.partidaMutex.Lock()
+			delete(s.clientePartida, playerID)
+			s.partidaMutex.Unlock()
+
+			enPartida = false
+			respuesta.Mensaje = "No estás inscrito en ninguna partida"
+			respuesta.PlayerStatus = "IDLE"
+		} else {
+			// Si está en una partida activa, continuar normalmente
+			switch partida.Estado {
+			case Esperando:
+				respuesta.PlayerStatus = "IN_QUEUE"
+				respuesta.Mensaje = fmt.Sprintf("Estás inscrito en la partida %s (Estado: %s)", partida.ID, partida.Estado)
+			case EnCurso:
+				respuesta.PlayerStatus = "IN_MATCH"
+				respuesta.Mensaje = fmt.Sprintf("Estás participando en la partida %s", partida.ID)
 			}
+			respuesta.PartidaId = partida.ID
 		}
-		respuesta.PartidaId = partida.ID
 	} else {
 		respuesta.Mensaje = "No estás inscrito en ninguna partida"
 	}
@@ -632,6 +770,124 @@ func (s *server) SincronizarReloj(ctx context.Context, req *pb.SincronizacionReq
 	}, nil
 }
 
+// Implementación del método UpdateServerStatus
+func (s *server) UpdateServerStatus(ctx context.Context, req *pb.ServerStatusUpdateRequest) (*pb.ServerStatusUpdateResponse, error) {
+	serverID := req.GetServerId()
+	status := req.GetStatus()
+	address := req.GetAddress()
+
+	log.Printf("Recibida actualización de estado del servidor de partidas %s: %s en %s",
+		serverID, status, address)
+
+	// Incrementar el reloj vectorial del servidor
+	s.mutex.Lock()
+	s.vectorClock.Increment("Matchmaker")
+	s.vectorClock.Update(req.GetRelojVectorial())
+	respClock := s.vectorClock.Get()
+	s.mutex.Unlock()
+
+	// Actualizar registro del servidor de partidas
+	s.servidoresMutex.Lock()
+	if _, existe := s.servidoresPartidas[serverID]; !existe {
+		log.Printf("Nuevo servidor de partidas registrado: %s", serverID)
+	}
+
+	s.servidoresPartidas[serverID] = &ServidorPartida{
+		ID:         serverID,
+		Address:    address,
+		Status:     status,
+		LastUpdate: time.Now(),
+	}
+	s.servidoresMutex.Unlock()
+
+	log.Printf("Servidor %s registrado/actualizado con dirección '%s' y estado '%s'",
+		serverID, address, status)
+
+	return &pb.ServerStatusUpdateResponse{
+		StatusCode:     0,
+		Message:        "Estado actualizado correctamente",
+		RelojVectorial: respClock,
+	}, nil
+}
+
+// Estructura para representar un servidor de partidas
+type ServidorPartida struct {
+	ID         string
+	Address    string
+	Status     string
+	LastUpdate time.Time
+}
+
+// Implementación del método NotifyMatchResult
+func (s *server) NotifyMatchResult(ctx context.Context, req *pb.MatchResultNotification) (*pb.MatchResultResponse, error) {
+	matchID := req.GetMatchId()
+	ganadorID := req.GetWinnerId()
+	perdedorID := req.GetLoserId()
+	serverID := req.GetServerId()
+
+	log.Printf("Recibida notificación de resultado de partida %s desde servidor %s: Ganador=%s, Perdedor=%s",
+		matchID, serverID, ganadorID, perdedorID)
+
+	// Incrementar el reloj vectorial del servidor
+	s.mutex.Lock()
+	s.vectorClock.Increment("Matchmaker")
+	s.vectorClock.Update(req.GetRelojVectorial())
+	respClock := s.vectorClock.Get()
+	s.mutex.Unlock()
+
+	// Actualizar el estado de la partida en el matchmaker
+	s.partidaMutex.Lock()
+	partida, existe := s.partidas[matchID]
+	if !existe {
+		s.partidaMutex.Unlock()
+		return &pb.MatchResultResponse{
+			StatusCode:     1,
+			Message:        "Partida no encontrada",
+			RelojVectorial: respClock,
+		}, nil
+	}
+
+	// Actualizar estado y resultado
+	partida.Estado = Finalizada
+	partida.Resultado = &ResultadoPartida{
+		Ganador:  ganadorID,
+		Perdedor: perdedorID,
+	}
+
+	// Eliminar las asociaciones cliente-partida
+	for _, cliente := range partida.Clientes {
+		delete(s.clientePartida, cliente)
+	}
+
+	// Importante: marcar explícitamente que la partida ya no está disponible
+	// para evitar que sea reutilizada inmediatamente
+	partidaID := partida.ID
+
+	// Opcionalmente, renombrar la partida para evitar colisiones
+	nuevoID := fmt.Sprintf("%s-completed-%d", partidaID, time.Now().Unix())
+	s.partidas[nuevoID] = partida
+	delete(s.partidas, partidaID)
+
+	s.partidaMutex.Unlock()
+
+	// Crear nueva partida disponible con el ID original
+	s.partidaMutex.Lock()
+	s.partidas[partidaID] = &Partida{
+		ID:       partidaID,
+		Clientes: []string{},
+		Estado:   Esperando,
+	}
+	s.partidaMutex.Unlock()
+
+	log.Printf("Resultado de partida %s registrado y creada nueva partida con ID %s", nuevoID, partidaID)
+
+	return &pb.MatchResultResponse{
+		StatusCode:     0,
+		Message:        "Resultado registrado correctamente",
+		RelojVectorial: respClock,
+	}, nil
+}
+
 func main() {
 	// Inicializar el generador de números aleatorios
 	rand.Seed(time.Now().UnixNano())
@@ -644,9 +900,10 @@ func main() {
 
 	// Crear servidor gRPC
 	s := &server{
-		vectorClock:    NewVectorClock("Matchmaker"),
-		partidas:       make(map[string]*Partida),
-		clientePartida: make(map[string]string),
+		vectorClock:        NewVectorClock("Matchmaker"),
+		partidas:           make(map[string]*Partida),
+		clientePartida:     make(map[string]string),
+		servidoresPartidas: make(map[string]*ServidorPartida),
 	}
 
 	// Crear algunas partidas iniciales
@@ -654,8 +911,11 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	// Registrar el servicio en el servidor
+	// Registrar el servicio de Matchmaker en el servidor
 	pb.RegisterMatchmakerServer(grpcServer, s)
+
+	// También registrar el servicio que usan los servidores de partidas
+	pb.RegisterMatchmakerServiceServer(grpcServer, s)
 
 	fmt.Printf("Servidor matchmaker iniciado en %s\n", port)
 

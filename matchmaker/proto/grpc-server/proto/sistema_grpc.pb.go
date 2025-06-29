@@ -205,3 +205,299 @@ var Matchmaker_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sistema.proto",
 }
+
+const (
+	PartidaService_AssignMatch_FullMethodName          = "/sistema.PartidaService/AssignMatch"
+	PartidaService_ObtenerEstadoPartida_FullMethodName = "/sistema.PartidaService/ObtenerEstadoPartida"
+)
+
+// PartidaServiceClient is the client API for PartidaService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Servicios que expone el servidor de partidas como servidor gRPC
+type PartidaServiceClient interface {
+	// Invocado por el Matchmaker para iniciar una partida
+	AssignMatch(ctx context.Context, in *AssignMatchRequest, opts ...grpc.CallOption) (*AssignMatchResponse, error)
+	// Otros métodos del servidor de partidas pueden estar aquí
+	ObtenerEstadoPartida(ctx context.Context, in *EstadoPartidaRequest, opts ...grpc.CallOption) (*EstadoPartidaResponse, error)
+}
+
+type partidaServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPartidaServiceClient(cc grpc.ClientConnInterface) PartidaServiceClient {
+	return &partidaServiceClient{cc}
+}
+
+func (c *partidaServiceClient) AssignMatch(ctx context.Context, in *AssignMatchRequest, opts ...grpc.CallOption) (*AssignMatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignMatchResponse)
+	err := c.cc.Invoke(ctx, PartidaService_AssignMatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *partidaServiceClient) ObtenerEstadoPartida(ctx context.Context, in *EstadoPartidaRequest, opts ...grpc.CallOption) (*EstadoPartidaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EstadoPartidaResponse)
+	err := c.cc.Invoke(ctx, PartidaService_ObtenerEstadoPartida_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PartidaServiceServer is the server API for PartidaService service.
+// All implementations must embed UnimplementedPartidaServiceServer
+// for forward compatibility.
+//
+// Servicios que expone el servidor de partidas como servidor gRPC
+type PartidaServiceServer interface {
+	// Invocado por el Matchmaker para iniciar una partida
+	AssignMatch(context.Context, *AssignMatchRequest) (*AssignMatchResponse, error)
+	// Otros métodos del servidor de partidas pueden estar aquí
+	ObtenerEstadoPartida(context.Context, *EstadoPartidaRequest) (*EstadoPartidaResponse, error)
+	mustEmbedUnimplementedPartidaServiceServer()
+}
+
+// UnimplementedPartidaServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedPartidaServiceServer struct{}
+
+func (UnimplementedPartidaServiceServer) AssignMatch(context.Context, *AssignMatchRequest) (*AssignMatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignMatch not implemented")
+}
+func (UnimplementedPartidaServiceServer) ObtenerEstadoPartida(context.Context, *EstadoPartidaRequest) (*EstadoPartidaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ObtenerEstadoPartida not implemented")
+}
+func (UnimplementedPartidaServiceServer) mustEmbedUnimplementedPartidaServiceServer() {}
+func (UnimplementedPartidaServiceServer) testEmbeddedByValue()                        {}
+
+// UnsafePartidaServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PartidaServiceServer will
+// result in compilation errors.
+type UnsafePartidaServiceServer interface {
+	mustEmbedUnimplementedPartidaServiceServer()
+}
+
+func RegisterPartidaServiceServer(s grpc.ServiceRegistrar, srv PartidaServiceServer) {
+	// If the following call pancis, it indicates UnimplementedPartidaServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&PartidaService_ServiceDesc, srv)
+}
+
+func _PartidaService_AssignMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignMatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PartidaServiceServer).AssignMatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PartidaService_AssignMatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PartidaServiceServer).AssignMatch(ctx, req.(*AssignMatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PartidaService_ObtenerEstadoPartida_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EstadoPartidaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PartidaServiceServer).ObtenerEstadoPartida(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PartidaService_ObtenerEstadoPartida_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PartidaServiceServer).ObtenerEstadoPartida(ctx, req.(*EstadoPartidaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PartidaService_ServiceDesc is the grpc.ServiceDesc for PartidaService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PartidaService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "sistema.PartidaService",
+	HandlerType: (*PartidaServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AssignMatch",
+			Handler:    _PartidaService_AssignMatch_Handler,
+		},
+		{
+			MethodName: "ObtenerEstadoPartida",
+			Handler:    _PartidaService_ObtenerEstadoPartida_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "sistema.proto",
+}
+
+const (
+	MatchmakerService_UpdateServerStatus_FullMethodName = "/sistema.MatchmakerService/UpdateServerStatus"
+	MatchmakerService_NotifyMatchResult_FullMethodName  = "/sistema.MatchmakerService/NotifyMatchResult"
+)
+
+// MatchmakerServiceClient is the client API for MatchmakerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Servicios que el Matchmaker expone para el servidor de partidas
+type MatchmakerServiceClient interface {
+	// Actualizar el estado del servidor de partidas
+	UpdateServerStatus(ctx context.Context, in *ServerStatusUpdateRequest, opts ...grpc.CallOption) (*ServerStatusUpdateResponse, error)
+	// Añadir este método al servicio MatchmakerService
+	NotifyMatchResult(ctx context.Context, in *MatchResultNotification, opts ...grpc.CallOption) (*MatchResultResponse, error)
+}
+
+type matchmakerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMatchmakerServiceClient(cc grpc.ClientConnInterface) MatchmakerServiceClient {
+	return &matchmakerServiceClient{cc}
+}
+
+func (c *matchmakerServiceClient) UpdateServerStatus(ctx context.Context, in *ServerStatusUpdateRequest, opts ...grpc.CallOption) (*ServerStatusUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerStatusUpdateResponse)
+	err := c.cc.Invoke(ctx, MatchmakerService_UpdateServerStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *matchmakerServiceClient) NotifyMatchResult(ctx context.Context, in *MatchResultNotification, opts ...grpc.CallOption) (*MatchResultResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MatchResultResponse)
+	err := c.cc.Invoke(ctx, MatchmakerService_NotifyMatchResult_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MatchmakerServiceServer is the server API for MatchmakerService service.
+// All implementations must embed UnimplementedMatchmakerServiceServer
+// for forward compatibility.
+//
+// Servicios que el Matchmaker expone para el servidor de partidas
+type MatchmakerServiceServer interface {
+	// Actualizar el estado del servidor de partidas
+	UpdateServerStatus(context.Context, *ServerStatusUpdateRequest) (*ServerStatusUpdateResponse, error)
+	// Añadir este método al servicio MatchmakerService
+	NotifyMatchResult(context.Context, *MatchResultNotification) (*MatchResultResponse, error)
+	mustEmbedUnimplementedMatchmakerServiceServer()
+}
+
+// UnimplementedMatchmakerServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedMatchmakerServiceServer struct{}
+
+func (UnimplementedMatchmakerServiceServer) UpdateServerStatus(context.Context, *ServerStatusUpdateRequest) (*ServerStatusUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateServerStatus not implemented")
+}
+func (UnimplementedMatchmakerServiceServer) NotifyMatchResult(context.Context, *MatchResultNotification) (*MatchResultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NotifyMatchResult not implemented")
+}
+func (UnimplementedMatchmakerServiceServer) mustEmbedUnimplementedMatchmakerServiceServer() {}
+func (UnimplementedMatchmakerServiceServer) testEmbeddedByValue()                           {}
+
+// UnsafeMatchmakerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MatchmakerServiceServer will
+// result in compilation errors.
+type UnsafeMatchmakerServiceServer interface {
+	mustEmbedUnimplementedMatchmakerServiceServer()
+}
+
+func RegisterMatchmakerServiceServer(s grpc.ServiceRegistrar, srv MatchmakerServiceServer) {
+	// If the following call pancis, it indicates UnimplementedMatchmakerServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&MatchmakerService_ServiceDesc, srv)
+}
+
+func _MatchmakerService_UpdateServerStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServerStatusUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchmakerServiceServer).UpdateServerStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchmakerService_UpdateServerStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchmakerServiceServer).UpdateServerStatus(ctx, req.(*ServerStatusUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MatchmakerService_NotifyMatchResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MatchResultNotification)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchmakerServiceServer).NotifyMatchResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MatchmakerService_NotifyMatchResult_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchmakerServiceServer).NotifyMatchResult(ctx, req.(*MatchResultNotification))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MatchmakerService_ServiceDesc is the grpc.ServiceDesc for MatchmakerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MatchmakerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "sistema.MatchmakerService",
+	HandlerType: (*MatchmakerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UpdateServerStatus",
+			Handler:    _MatchmakerService_UpdateServerStatus_Handler,
+		},
+		{
+			MethodName: "NotifyMatchResult",
+			Handler:    _MatchmakerService_NotifyMatchResult_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "sistema.proto",
+}

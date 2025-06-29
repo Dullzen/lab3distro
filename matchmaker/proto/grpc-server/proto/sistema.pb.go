@@ -409,9 +409,10 @@ type Partida struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Clientes      []string               `protobuf:"bytes,2,rep,name=clientes,proto3" json:"clientes,omitempty"`
 	Llena         bool                   `protobuf:"varint,3,opt,name=llena,proto3" json:"llena,omitempty"`
-	Estado        string                 `protobuf:"bytes,4,opt,name=estado,proto3" json:"estado,omitempty"`     // Estado de la partida (Esperando, En curso, Finalizada)
-	Ganador       string                 `protobuf:"bytes,5,opt,name=ganador,proto3" json:"ganador,omitempty"`   // Ganador de la partida (si está finalizada)
-	Perdedor      string                 `protobuf:"bytes,6,opt,name=perdedor,proto3" json:"perdedor,omitempty"` // Perdedor de la partida (si está finalizada)
+	Estado        string                 `protobuf:"bytes,4,opt,name=estado,proto3" json:"estado,omitempty"`                           // Estado de la partida (Esperando, En curso, Finalizada)
+	Ganador       string                 `protobuf:"bytes,5,opt,name=ganador,proto3" json:"ganador,omitempty"`                         // Ganador de la partida (si está finalizada)
+	Perdedor      string                 `protobuf:"bytes,6,opt,name=perdedor,proto3" json:"perdedor,omitempty"`                       // Perdedor de la partida (si está finalizada)
+	ServidorId    string                 `protobuf:"bytes,7,opt,name=servidor_id,json=servidorId,proto3" json:"servidor_id,omitempty"` // Añadir campo para el ID del servidor
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -484,6 +485,13 @@ func (x *Partida) GetGanador() string {
 func (x *Partida) GetPerdedor() string {
 	if x != nil {
 		return x.Perdedor
+	}
+	return ""
+}
+
+func (x *Partida) GetServidorId() string {
+	if x != nil {
+		return x.ServidorId
 	}
 	return ""
 }
@@ -617,6 +625,548 @@ func (x *ConexionResponse) GetPartidaId() string {
 	return ""
 }
 
+// Solicitud para asignar una partida
+type AssignMatchRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MatchId        string                 `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	PlayerIds      []string               `protobuf:"bytes,2,rep,name=player_ids,json=playerIds,proto3" json:"player_ids,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,3,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AssignMatchRequest) Reset() {
+	*x = AssignMatchRequest{}
+	mi := &file_sistema_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignMatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignMatchRequest) ProtoMessage() {}
+
+func (x *AssignMatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignMatchRequest.ProtoReflect.Descriptor instead.
+func (*AssignMatchRequest) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AssignMatchRequest) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
+	}
+	return ""
+}
+
+func (x *AssignMatchRequest) GetPlayerIds() []string {
+	if x != nil {
+		return x.PlayerIds
+	}
+	return nil
+}
+
+func (x *AssignMatchRequest) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Respuesta a la asignación de partida
+type AssignMatchResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	StatusCode     int32                  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"` // 0 = éxito, otro valor = fallo
+	Message        string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,3,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AssignMatchResponse) Reset() {
+	*x = AssignMatchResponse{}
+	mi := &file_sistema_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignMatchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignMatchResponse) ProtoMessage() {}
+
+func (x *AssignMatchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignMatchResponse.ProtoReflect.Descriptor instead.
+func (*AssignMatchResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AssignMatchResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *AssignMatchResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *AssignMatchResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+type EstadoPartidaRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PartidaId      string                 `protobuf:"bytes,1,opt,name=partida_id,json=partidaId,proto3" json:"partida_id,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,2,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EstadoPartidaRequest) Reset() {
+	*x = EstadoPartidaRequest{}
+	mi := &file_sistema_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EstadoPartidaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EstadoPartidaRequest) ProtoMessage() {}
+
+func (x *EstadoPartidaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EstadoPartidaRequest.ProtoReflect.Descriptor instead.
+func (*EstadoPartidaRequest) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *EstadoPartidaRequest) GetPartidaId() string {
+	if x != nil {
+		return x.PartidaId
+	}
+	return ""
+}
+
+func (x *EstadoPartidaRequest) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+type EstadoPartidaResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Encontrada     bool                   `protobuf:"varint,1,opt,name=encontrada,proto3" json:"encontrada,omitempty"`
+	PartidaId      string                 `protobuf:"bytes,2,opt,name=partida_id,json=partidaId,proto3" json:"partida_id,omitempty"`
+	Jugador1       string                 `protobuf:"bytes,3,opt,name=jugador1,proto3" json:"jugador1,omitempty"`
+	Jugador2       string                 `protobuf:"bytes,4,opt,name=jugador2,proto3" json:"jugador2,omitempty"`
+	Estado         string                 `protobuf:"bytes,5,opt,name=estado,proto3" json:"estado,omitempty"`
+	Ganador        string                 `protobuf:"bytes,6,opt,name=ganador,proto3" json:"ganador,omitempty"`
+	Mensaje        string                 `protobuf:"bytes,7,opt,name=mensaje,proto3" json:"mensaje,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,8,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EstadoPartidaResponse) Reset() {
+	*x = EstadoPartidaResponse{}
+	mi := &file_sistema_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EstadoPartidaResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EstadoPartidaResponse) ProtoMessage() {}
+
+func (x *EstadoPartidaResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EstadoPartidaResponse.ProtoReflect.Descriptor instead.
+func (*EstadoPartidaResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *EstadoPartidaResponse) GetEncontrada() bool {
+	if x != nil {
+		return x.Encontrada
+	}
+	return false
+}
+
+func (x *EstadoPartidaResponse) GetPartidaId() string {
+	if x != nil {
+		return x.PartidaId
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetJugador1() string {
+	if x != nil {
+		return x.Jugador1
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetJugador2() string {
+	if x != nil {
+		return x.Jugador2
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetEstado() string {
+	if x != nil {
+		return x.Estado
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetGanador() string {
+	if x != nil {
+		return x.Ganador
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetMensaje() string {
+	if x != nil {
+		return x.Mensaje
+	}
+	return ""
+}
+
+func (x *EstadoPartidaResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Solicitud para actualizar el estado del servidor
+type ServerStatusUpdateRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ServerId       string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	Status         string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`   // "DISPONIBLE", "OCUPADO", "CAIDO"
+	Address        string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"` // IP:puerto del servidor de partidas
+	RelojVectorial map[string]int32       `protobuf:"bytes,4,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ServerStatusUpdateRequest) Reset() {
+	*x = ServerStatusUpdateRequest{}
+	mi := &file_sistema_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerStatusUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerStatusUpdateRequest) ProtoMessage() {}
+
+func (x *ServerStatusUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerStatusUpdateRequest.ProtoReflect.Descriptor instead.
+func (*ServerStatusUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ServerStatusUpdateRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *ServerStatusUpdateRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ServerStatusUpdateRequest) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *ServerStatusUpdateRequest) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Respuesta a la actualización de estado
+type ServerStatusUpdateResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	StatusCode     int32                  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"` // 0 = éxito, otro valor = fallo
+	Message        string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,3,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ServerStatusUpdateResponse) Reset() {
+	*x = ServerStatusUpdateResponse{}
+	mi := &file_sistema_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerStatusUpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerStatusUpdateResponse) ProtoMessage() {}
+
+func (x *ServerStatusUpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerStatusUpdateResponse.ProtoReflect.Descriptor instead.
+func (*ServerStatusUpdateResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ServerStatusUpdateResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *ServerStatusUpdateResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ServerStatusUpdateResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Notificación del resultado de una partida
+type MatchResultNotification struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MatchId        string                 `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	WinnerId       string                 `protobuf:"bytes,2,opt,name=winner_id,json=winnerId,proto3" json:"winner_id,omitempty"`
+	LoserId        string                 `protobuf:"bytes,3,opt,name=loser_id,json=loserId,proto3" json:"loser_id,omitempty"`
+	ServerId       string                 `protobuf:"bytes,4,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,5,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MatchResultNotification) Reset() {
+	*x = MatchResultNotification{}
+	mi := &file_sistema_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchResultNotification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchResultNotification) ProtoMessage() {}
+
+func (x *MatchResultNotification) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchResultNotification.ProtoReflect.Descriptor instead.
+func (*MatchResultNotification) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *MatchResultNotification) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
+	}
+	return ""
+}
+
+func (x *MatchResultNotification) GetWinnerId() string {
+	if x != nil {
+		return x.WinnerId
+	}
+	return ""
+}
+
+func (x *MatchResultNotification) GetLoserId() string {
+	if x != nil {
+		return x.LoserId
+	}
+	return ""
+}
+
+func (x *MatchResultNotification) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *MatchResultNotification) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
+// Respuesta a la notificación del resultado
+type MatchResultResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	StatusCode     int32                  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"` // 0 = éxito, otro valor = fallo
+	Message        string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	RelojVectorial map[string]int32       `protobuf:"bytes,3,rep,name=reloj_vectorial,json=relojVectorial,proto3" json:"reloj_vectorial,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MatchResultResponse) Reset() {
+	*x = MatchResultResponse{}
+	mi := &file_sistema_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchResultResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchResultResponse) ProtoMessage() {}
+
+func (x *MatchResultResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sistema_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchResultResponse.ProtoReflect.Descriptor instead.
+func (*MatchResultResponse) Descriptor() ([]byte, []int) {
+	return file_sistema_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MatchResultResponse) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *MatchResultResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *MatchResultResponse) GetRelojVectorial() map[string]int32 {
+	if x != nil {
+		return x.RelojVectorial
+	}
+	return nil
+}
+
 var File_sistema_proto protoreflect.FileDescriptor
 
 const file_sistema_proto_rawDesc = "" +
@@ -669,14 +1219,16 @@ const file_sistema_proto_rawDesc = "" +
 	"\x05exito\x18\x02 \x01(\bR\x05exito\x1aA\n" +
 	"\x13RelojVectorialEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\x99\x01\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xba\x01\n" +
 	"\aPartida\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bclientes\x18\x02 \x03(\tR\bclientes\x12\x14\n" +
 	"\x05llena\x18\x03 \x01(\bR\x05llena\x12\x16\n" +
 	"\x06estado\x18\x04 \x01(\tR\x06estado\x12\x18\n" +
 	"\aganador\x18\x05 \x01(\tR\aganador\x12\x1a\n" +
-	"\bperdedor\x18\x06 \x01(\tR\bperdedor\"\xc5\x01\n" +
+	"\bperdedor\x18\x06 \x01(\tR\bperdedor\x12\x1f\n" +
+	"\vservidor_id\x18\a \x01(\tR\n" +
+	"servidorId\"\xc5\x01\n" +
 	"\x0fConexionRequest\x12\x18\n" +
 	"\amensaje\x18\x01 \x01(\tR\amensaje\x12U\n" +
 	"\x0freloj_vectorial\x18\x02 \x03(\v2,.sistema.ConexionRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
@@ -692,12 +1244,89 @@ const file_sistema_proto_rawDesc = "" +
 	"partida_id\x18\x05 \x01(\tR\tpartidaId\x1aA\n" +
 	"\x13RelojVectorialEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xeb\x01\n" +
+	"\x12AssignMatchRequest\x12\x19\n" +
+	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1d\n" +
+	"\n" +
+	"player_ids\x18\x02 \x03(\tR\tplayerIds\x12X\n" +
+	"\x0freloj_vectorial\x18\x03 \x03(\v2/.sistema.AssignMatchRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xee\x01\n" +
+	"\x13AssignMatchResponse\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12Y\n" +
+	"\x0freloj_vectorial\x18\x03 \x03(\v20.sistema.AssignMatchResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xd4\x01\n" +
+	"\x14EstadoPartidaRequest\x12\x1d\n" +
+	"\n" +
+	"partida_id\x18\x01 \x01(\tR\tpartidaId\x12Z\n" +
+	"\x0freloj_vectorial\x18\x02 \x03(\v21.sistema.EstadoPartidaRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xfa\x02\n" +
+	"\x15EstadoPartidaResponse\x12\x1e\n" +
+	"\n" +
+	"encontrada\x18\x01 \x01(\bR\n" +
+	"encontrada\x12\x1d\n" +
+	"\n" +
+	"partida_id\x18\x02 \x01(\tR\tpartidaId\x12\x1a\n" +
+	"\bjugador1\x18\x03 \x01(\tR\bjugador1\x12\x1a\n" +
+	"\bjugador2\x18\x04 \x01(\tR\bjugador2\x12\x16\n" +
+	"\x06estado\x18\x05 \x01(\tR\x06estado\x12\x18\n" +
+	"\aganador\x18\x06 \x01(\tR\aganador\x12\x18\n" +
+	"\amensaje\x18\a \x01(\tR\amensaje\x12[\n" +
+	"\x0freloj_vectorial\x18\b \x03(\v22.sistema.EstadoPartidaResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\x8e\x02\n" +
+	"\x19ServerStatusUpdateRequest\x12\x1b\n" +
+	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12_\n" +
+	"\x0freloj_vectorial\x18\x04 \x03(\v26.sistema.ServerStatusUpdateRequest.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xfc\x01\n" +
+	"\x1aServerStatusUpdateResponse\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12`\n" +
+	"\x0freloj_vectorial\x18\x03 \x03(\v27.sistema.ServerStatusUpdateResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xab\x02\n" +
+	"\x17MatchResultNotification\x12\x19\n" +
+	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1b\n" +
+	"\twinner_id\x18\x02 \x01(\tR\bwinnerId\x12\x19\n" +
+	"\bloser_id\x18\x03 \x01(\tR\aloserId\x12\x1b\n" +
+	"\tserver_id\x18\x04 \x01(\tR\bserverId\x12]\n" +
+	"\x0freloj_vectorial\x18\x05 \x03(\v24.sistema.MatchResultNotification.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xee\x01\n" +
+	"\x13MatchResultResponse\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12Y\n" +
+	"\x0freloj_vectorial\x18\x03 \x03(\v20.sistema.MatchResultResponse.RelojVectorialEntryR\x0erelojVectorial\x1aA\n" +
+	"\x13RelojVectorialEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x012\x80\x02\n" +
 	"\n" +
 	"Matchmaker\x12I\n" +
 	"\vQueuePlayer\x12\x1a.sistema.PlayerInfoRequest\x1a\x1c.sistema.QueuePlayerResponse\"\x00\x12P\n" +
 	"\x0fGetPlayerStatus\x12\x1c.sistema.PlayerStatusRequest\x1a\x1d.sistema.PlayerStatusResponse\"\x00\x12U\n" +
-	"\x10SincronizarReloj\x12\x1e.sistema.SincronizacionRequest\x1a\x1f.sistema.SincronizacionResponse\"\x00B\x13Z\x11grpc-server/protob\x06proto3"
+	"\x10SincronizarReloj\x12\x1e.sistema.SincronizacionRequest\x1a\x1f.sistema.SincronizacionResponse\"\x002\xb5\x01\n" +
+	"\x0ePartidaService\x12J\n" +
+	"\vAssignMatch\x12\x1b.sistema.AssignMatchRequest\x1a\x1c.sistema.AssignMatchResponse\"\x00\x12W\n" +
+	"\x14ObtenerEstadoPartida\x12\x1d.sistema.EstadoPartidaRequest\x1a\x1e.sistema.EstadoPartidaResponse\"\x002\xcb\x01\n" +
+	"\x11MatchmakerService\x12_\n" +
+	"\x12UpdateServerStatus\x12\".sistema.ServerStatusUpdateRequest\x1a#.sistema.ServerStatusUpdateResponse\"\x00\x12U\n" +
+	"\x11NotifyMatchResult\x12 .sistema.MatchResultNotification\x1a\x1c.sistema.MatchResultResponse\"\x00B\x13Z\x11grpc-server/protob\x06proto3"
 
 var (
 	file_sistema_proto_rawDescOnce sync.Once
@@ -711,48 +1340,80 @@ func file_sistema_proto_rawDescGZIP() []byte {
 	return file_sistema_proto_rawDescData
 }
 
-var file_sistema_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_sistema_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_sistema_proto_goTypes = []any{
-	(*PlayerInfoRequest)(nil),      // 0: sistema.PlayerInfoRequest
-	(*QueuePlayerResponse)(nil),    // 1: sistema.QueuePlayerResponse
-	(*PlayerStatusRequest)(nil),    // 2: sistema.PlayerStatusRequest
-	(*PlayerStatusResponse)(nil),   // 3: sistema.PlayerStatusResponse
-	(*SincronizacionRequest)(nil),  // 4: sistema.SincronizacionRequest
-	(*SincronizacionResponse)(nil), // 5: sistema.SincronizacionResponse
-	(*Partida)(nil),                // 6: sistema.Partida
-	(*ConexionRequest)(nil),        // 7: sistema.ConexionRequest
-	(*ConexionResponse)(nil),       // 8: sistema.ConexionResponse
-	nil,                            // 9: sistema.PlayerInfoRequest.RelojVectorialEntry
-	nil,                            // 10: sistema.QueuePlayerResponse.RelojVectorialEntry
-	nil,                            // 11: sistema.PlayerStatusRequest.RelojVectorialEntry
-	nil,                            // 12: sistema.PlayerStatusResponse.RelojVectorialEntry
-	nil,                            // 13: sistema.SincronizacionRequest.RelojVectorialEntry
-	nil,                            // 14: sistema.SincronizacionResponse.RelojVectorialEntry
-	nil,                            // 15: sistema.ConexionRequest.RelojVectorialEntry
-	nil,                            // 16: sistema.ConexionResponse.RelojVectorialEntry
+	(*PlayerInfoRequest)(nil),          // 0: sistema.PlayerInfoRequest
+	(*QueuePlayerResponse)(nil),        // 1: sistema.QueuePlayerResponse
+	(*PlayerStatusRequest)(nil),        // 2: sistema.PlayerStatusRequest
+	(*PlayerStatusResponse)(nil),       // 3: sistema.PlayerStatusResponse
+	(*SincronizacionRequest)(nil),      // 4: sistema.SincronizacionRequest
+	(*SincronizacionResponse)(nil),     // 5: sistema.SincronizacionResponse
+	(*Partida)(nil),                    // 6: sistema.Partida
+	(*ConexionRequest)(nil),            // 7: sistema.ConexionRequest
+	(*ConexionResponse)(nil),           // 8: sistema.ConexionResponse
+	(*AssignMatchRequest)(nil),         // 9: sistema.AssignMatchRequest
+	(*AssignMatchResponse)(nil),        // 10: sistema.AssignMatchResponse
+	(*EstadoPartidaRequest)(nil),       // 11: sistema.EstadoPartidaRequest
+	(*EstadoPartidaResponse)(nil),      // 12: sistema.EstadoPartidaResponse
+	(*ServerStatusUpdateRequest)(nil),  // 13: sistema.ServerStatusUpdateRequest
+	(*ServerStatusUpdateResponse)(nil), // 14: sistema.ServerStatusUpdateResponse
+	(*MatchResultNotification)(nil),    // 15: sistema.MatchResultNotification
+	(*MatchResultResponse)(nil),        // 16: sistema.MatchResultResponse
+	nil,                                // 17: sistema.PlayerInfoRequest.RelojVectorialEntry
+	nil,                                // 18: sistema.QueuePlayerResponse.RelojVectorialEntry
+	nil,                                // 19: sistema.PlayerStatusRequest.RelojVectorialEntry
+	nil,                                // 20: sistema.PlayerStatusResponse.RelojVectorialEntry
+	nil,                                // 21: sistema.SincronizacionRequest.RelojVectorialEntry
+	nil,                                // 22: sistema.SincronizacionResponse.RelojVectorialEntry
+	nil,                                // 23: sistema.ConexionRequest.RelojVectorialEntry
+	nil,                                // 24: sistema.ConexionResponse.RelojVectorialEntry
+	nil,                                // 25: sistema.AssignMatchRequest.RelojVectorialEntry
+	nil,                                // 26: sistema.AssignMatchResponse.RelojVectorialEntry
+	nil,                                // 27: sistema.EstadoPartidaRequest.RelojVectorialEntry
+	nil,                                // 28: sistema.EstadoPartidaResponse.RelojVectorialEntry
+	nil,                                // 29: sistema.ServerStatusUpdateRequest.RelojVectorialEntry
+	nil,                                // 30: sistema.ServerStatusUpdateResponse.RelojVectorialEntry
+	nil,                                // 31: sistema.MatchResultNotification.RelojVectorialEntry
+	nil,                                // 32: sistema.MatchResultResponse.RelojVectorialEntry
 }
 var file_sistema_proto_depIdxs = []int32{
-	9,  // 0: sistema.PlayerInfoRequest.reloj_vectorial:type_name -> sistema.PlayerInfoRequest.RelojVectorialEntry
-	10, // 1: sistema.QueuePlayerResponse.reloj_vectorial:type_name -> sistema.QueuePlayerResponse.RelojVectorialEntry
-	11, // 2: sistema.PlayerStatusRequest.reloj_vectorial:type_name -> sistema.PlayerStatusRequest.RelojVectorialEntry
+	17, // 0: sistema.PlayerInfoRequest.reloj_vectorial:type_name -> sistema.PlayerInfoRequest.RelojVectorialEntry
+	18, // 1: sistema.QueuePlayerResponse.reloj_vectorial:type_name -> sistema.QueuePlayerResponse.RelojVectorialEntry
+	19, // 2: sistema.PlayerStatusRequest.reloj_vectorial:type_name -> sistema.PlayerStatusRequest.RelojVectorialEntry
 	6,  // 3: sistema.PlayerStatusResponse.partidas:type_name -> sistema.Partida
-	12, // 4: sistema.PlayerStatusResponse.reloj_vectorial:type_name -> sistema.PlayerStatusResponse.RelojVectorialEntry
-	13, // 5: sistema.SincronizacionRequest.reloj_vectorial:type_name -> sistema.SincronizacionRequest.RelojVectorialEntry
-	14, // 6: sistema.SincronizacionResponse.reloj_vectorial:type_name -> sistema.SincronizacionResponse.RelojVectorialEntry
-	15, // 7: sistema.ConexionRequest.reloj_vectorial:type_name -> sistema.ConexionRequest.RelojVectorialEntry
-	16, // 8: sistema.ConexionResponse.reloj_vectorial:type_name -> sistema.ConexionResponse.RelojVectorialEntry
+	20, // 4: sistema.PlayerStatusResponse.reloj_vectorial:type_name -> sistema.PlayerStatusResponse.RelojVectorialEntry
+	21, // 5: sistema.SincronizacionRequest.reloj_vectorial:type_name -> sistema.SincronizacionRequest.RelojVectorialEntry
+	22, // 6: sistema.SincronizacionResponse.reloj_vectorial:type_name -> sistema.SincronizacionResponse.RelojVectorialEntry
+	23, // 7: sistema.ConexionRequest.reloj_vectorial:type_name -> sistema.ConexionRequest.RelojVectorialEntry
+	24, // 8: sistema.ConexionResponse.reloj_vectorial:type_name -> sistema.ConexionResponse.RelojVectorialEntry
 	6,  // 9: sistema.ConexionResponse.partidas:type_name -> sistema.Partida
-	0,  // 10: sistema.Matchmaker.QueuePlayer:input_type -> sistema.PlayerInfoRequest
-	2,  // 11: sistema.Matchmaker.GetPlayerStatus:input_type -> sistema.PlayerStatusRequest
-	4,  // 12: sistema.Matchmaker.SincronizarReloj:input_type -> sistema.SincronizacionRequest
-	1,  // 13: sistema.Matchmaker.QueuePlayer:output_type -> sistema.QueuePlayerResponse
-	3,  // 14: sistema.Matchmaker.GetPlayerStatus:output_type -> sistema.PlayerStatusResponse
-	5,  // 15: sistema.Matchmaker.SincronizarReloj:output_type -> sistema.SincronizacionResponse
-	13, // [13:16] is the sub-list for method output_type
-	10, // [10:13] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	25, // 10: sistema.AssignMatchRequest.reloj_vectorial:type_name -> sistema.AssignMatchRequest.RelojVectorialEntry
+	26, // 11: sistema.AssignMatchResponse.reloj_vectorial:type_name -> sistema.AssignMatchResponse.RelojVectorialEntry
+	27, // 12: sistema.EstadoPartidaRequest.reloj_vectorial:type_name -> sistema.EstadoPartidaRequest.RelojVectorialEntry
+	28, // 13: sistema.EstadoPartidaResponse.reloj_vectorial:type_name -> sistema.EstadoPartidaResponse.RelojVectorialEntry
+	29, // 14: sistema.ServerStatusUpdateRequest.reloj_vectorial:type_name -> sistema.ServerStatusUpdateRequest.RelojVectorialEntry
+	30, // 15: sistema.ServerStatusUpdateResponse.reloj_vectorial:type_name -> sistema.ServerStatusUpdateResponse.RelojVectorialEntry
+	31, // 16: sistema.MatchResultNotification.reloj_vectorial:type_name -> sistema.MatchResultNotification.RelojVectorialEntry
+	32, // 17: sistema.MatchResultResponse.reloj_vectorial:type_name -> sistema.MatchResultResponse.RelojVectorialEntry
+	0,  // 18: sistema.Matchmaker.QueuePlayer:input_type -> sistema.PlayerInfoRequest
+	2,  // 19: sistema.Matchmaker.GetPlayerStatus:input_type -> sistema.PlayerStatusRequest
+	4,  // 20: sistema.Matchmaker.SincronizarReloj:input_type -> sistema.SincronizacionRequest
+	9,  // 21: sistema.PartidaService.AssignMatch:input_type -> sistema.AssignMatchRequest
+	11, // 22: sistema.PartidaService.ObtenerEstadoPartida:input_type -> sistema.EstadoPartidaRequest
+	13, // 23: sistema.MatchmakerService.UpdateServerStatus:input_type -> sistema.ServerStatusUpdateRequest
+	15, // 24: sistema.MatchmakerService.NotifyMatchResult:input_type -> sistema.MatchResultNotification
+	1,  // 25: sistema.Matchmaker.QueuePlayer:output_type -> sistema.QueuePlayerResponse
+	3,  // 26: sistema.Matchmaker.GetPlayerStatus:output_type -> sistema.PlayerStatusResponse
+	5,  // 27: sistema.Matchmaker.SincronizarReloj:output_type -> sistema.SincronizacionResponse
+	10, // 28: sistema.PartidaService.AssignMatch:output_type -> sistema.AssignMatchResponse
+	12, // 29: sistema.PartidaService.ObtenerEstadoPartida:output_type -> sistema.EstadoPartidaResponse
+	14, // 30: sistema.MatchmakerService.UpdateServerStatus:output_type -> sistema.ServerStatusUpdateResponse
+	16, // 31: sistema.MatchmakerService.NotifyMatchResult:output_type -> sistema.MatchResultResponse
+	25, // [25:32] is the sub-list for method output_type
+	18, // [18:25] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_sistema_proto_init() }
@@ -766,9 +1427,9 @@ func file_sistema_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sistema_proto_rawDesc), len(file_sistema_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   33,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   3,
 		},
 		GoTypes:           file_sistema_proto_goTypes,
 		DependencyIndexes: file_sistema_proto_depIdxs,

@@ -113,23 +113,77 @@ func mostrarPartidas(partidas []*pb.Partida) {
 	}
 
 	fmt.Println("\n=== LISTADO DE PARTIDAS ===")
-	for i, p := range partidas {
-		estado := p.Estado
-		if estado == "" {
-			estado = "Esperando"
+
+	// Crear un mapa para organizar partidas por servidor y por ID
+	partidasPorServidor := make(map[string]*pb.Partida)
+	partidasPorID := make(map[string]*pb.Partida)
+
+	// Organizar partidas tanto por servidor como por ID
+	for _, p := range partidas {
+		partidasPorID[p.Id] = p
+
+		// Si tiene ServidorId, también guardar referencia
+		if p.ServidorId != "" {
+			partidasPorServidor[p.ServidorId] = p
 		}
+	}
 
-		status := "Disponible"
-		if p.Llena {
-			status = "Llena"
-		}
+	// Ordenar IDs para mostrar siempre en el mismo orden
+	servidores := []string{"Partida-1", "Partida-2", "Partida-3"}
 
-		partidaInfo := fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
-			i+1, p.Id, estado, status, strings.Join(p.Clientes, ", "))
+	// Mostrar partidas según el orden de servidores
+	for i, servidorID := range servidores {
+		var p *pb.Partida
+		var partidaInfo string
 
-		// Si la partida está finalizada, mostrar ganador y perdedor
-		if estado == "Finalizada" && p.Ganador != "" {
-			partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
+		// Revisar si hay una partida ejecutándose en este servidor
+		partidaServidor, existeEnServidor := partidasPorServidor[servidorID]
+
+		// También revisar si hay una partida con este ID
+		partidaID, existePorID := partidasPorID[servidorID]
+
+		// Priorizar partida que se ejecuta en el servidor sobre partida que solo tiene ese ID
+		if existeEnServidor {
+			p = partidaServidor
+
+			estado := p.Estado
+			if estado == "" {
+				estado = "Esperando"
+			}
+
+			status := "Disponible"
+			if p.Llena {
+				status = "Llena"
+			}
+
+			partidaInfo = fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
+				i+1, servidorID, estado, status, strings.Join(p.Clientes, ", "))
+
+			if estado == "Finalizada" && p.Ganador != "" {
+				partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
+			}
+		} else if existePorID {
+			p = partidaID
+
+			estado := p.Estado
+			if estado == "" {
+				estado = "Esperando"
+			}
+
+			status := "Disponible"
+			if p.Llena {
+				status = "Llena"
+			}
+
+			partidaInfo = fmt.Sprintf("%d. %s (Estado: %s, %s) - Jugadores: %s",
+				i+1, servidorID, estado, status, strings.Join(p.Clientes, ", "))
+
+			if estado == "Finalizada" && p.Ganador != "" {
+				partidaInfo += fmt.Sprintf(" | Ganador: %s, Perdedor: %s", p.Ganador, p.Perdedor)
+			}
+		} else {
+			// Si no hay partida para este servidor, mostrar un placeholder
+			partidaInfo = fmt.Sprintf("%d. %s (Estado: No disponible) - Jugadores:", i+1, servidorID)
 		}
 
 		fmt.Println(partidaInfo)
@@ -218,7 +272,31 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 
 	// Si estamos en una partida, mostrar el ID
 	if resp.PartidaId != "" {
-		fmt.Printf("[%s] Partida asignada: %s\n", clienteID, resp.PartidaId)
+		// Nueva lógica para mostrar el servidor si es necesario
+		partidaAsignada := resp.GetPartidaId()
+		partidaServidor := ""
+
+		// Buscar en la lista de partidas para encontrar el servidor real
+		for _, p := range resp.GetPartidas() {
+			if p.Id == partidaAsignada {
+				// Si la partida tiene un servidor asignado, usar ese ID
+				if p.ServidorId != "" {
+					partidaServidor = p.ServidorId
+				}
+				break
+			}
+		}
+
+		// Mostrar información de la partida asignada
+		if resp.PlayerStatus == "IN_MATCH" || resp.PlayerStatus == "IN_QUEUE" {
+			// Si hay un servidor específico, mostrarlo
+			if partidaServidor != "" && partidaServidor != partidaAsignada {
+				fmt.Printf("[%s] Asignado a partida lógica: %s (ejecutándose en servidor: %s)\n",
+					clienteID, partidaAsignada, partidaServidor)
+			} else {
+				fmt.Printf("[%s] Partida asignada: %s\n", clienteID, partidaAsignada)
+			}
+		}
 	}
 
 	// Detener las consultas periódicas si:
@@ -269,8 +347,10 @@ func consultarEstadoPeriodicamente(client pb.MatchmakerClient, clienteID string,
 	}
 }
 
-// Función para enviar una solicitud de desinscripción
+// Función para enviar una solicitud de desinscripción (cancelación)
 func cancelQueuePlayer(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool) {
+	// Esta función podría ser implementada como un nuevo método en la API,
+	// pero para compatibilidad, usaremos GetPlayerStatus con un manejo especial
 
 	// Incrementar el reloj vectorial antes de enviar un mensaje
 	vectorClock.Increment(clienteID)
