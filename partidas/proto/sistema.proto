@@ -161,3 +161,59 @@ message MatchResultResponse {
   string message = 2;
   map<string, int32> reloj_vectorial = 3;
 }
+
+// Servicio de administración para el matchmaker
+service AdminService {
+  // Obtener una vista completa del estado del sistema
+  rpc AdminGetSystemStatus(AdminRequest) returns (SystemStatusResponse) {}
+  
+  // Modificar el estado de un servidor
+  rpc AdminUpdateServerState(AdminServerUpdateRequest) returns (AdminUpdateResponse) {}
+}
+
+// Solicitud del administrador
+message AdminRequest {
+  string admin_id = 1;
+  map<string, int32> reloj_vectorial = 2;
+}
+
+// Respuesta con el estado completo del sistema
+message SystemStatusResponse {
+  repeated ServerStatus servers = 1;
+  repeated QueueInfo queue_players = 2;
+  repeated Partida active_games = 3;
+  map<string, int32> reloj_vectorial = 4;
+  int32 status_code = 5;
+  string message = 6;
+}
+
+// Información de un servidor
+message ServerStatus {
+  string server_id = 1;
+  string status = 2;
+  string address = 3;
+  int64 last_update = 4;  // timestamp de última actualización
+  string active_match_id = 5;
+}
+
+// Información de un jugador en cola
+message QueueInfo {
+  string player_id = 1;
+  int64 join_time = 2;  // timestamp de unión a la cola
+  int32 position = 3;   // posición en la cola
+}
+
+// Solicitud para actualizar el estado de un servidor
+message AdminServerUpdateRequest {
+  string admin_id = 1;
+  string server_id = 2;
+  string new_status = 3;  // "DISPONIBLE", "OCUPADO", "CAIDO", "RESET"
+  map<string, int32> reloj_vectorial = 4;
+}
+
+// Respuesta a la solicitud de actualización
+message AdminUpdateResponse {
+  int32 status_code = 1;
+  string message = 2;
+  map<string, int32> reloj_vectorial = 3;
+}
