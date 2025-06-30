@@ -406,6 +406,20 @@ func (s *partidaServer) notificarResultadoAMatchmaker() {
 
 	log.Printf("[%s] Resultado notificado correctamente al matchmaker (código: %d, mensaje: %s)",
 		s.partidaID, resp.GetStatusCode(), resp.GetMessage())
+
+	// Restablecer el estado rápidamente en lugar de esperar
+	s.partidaState.mutex.Lock()
+	s.partidaState.ID = ""
+	s.partidaState.Jugadores = nil
+	s.partidaState.Resultado = nil
+	s.partidaState.Estado = Disponible
+	s.partidaState.mutex.Unlock()
+
+	// Actualizar inmediatamente el estado a DISPONIBLE
+	err = s.updateServerStatus(Disponible)
+	if err != nil {
+		log.Printf("[%s] Error al actualizar estado a Disponible: %v", s.partidaID, err)
+	}
 }
 
 func main() {

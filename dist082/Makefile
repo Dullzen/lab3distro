@@ -2,17 +2,17 @@
 
 all: docker-jugador2-servidor2
 
-# Build cliente2
+
 build-cliente2:
 	sudo docker build -t cliente2 ./cliente
 
-# Build partida2
+
 build-partida2:
 	sudo docker build -t partida2 ./partidas
 
 
 
-# Run both in background, then show partida logs and cliente in interactive mode
+
 docker-jugador2-servidor2: build-cliente2 build-partida2
 	-sudo docker rm -f cliente2 || true
 	-sudo docker rm -f partida2 || true
@@ -27,12 +27,12 @@ docker-jugador2-servidor2: build-cliente2 build-partida2
 		-e MATCHMAKER_ADDRESS=10.35.168.94:50051 \
 		cliente2
 
-# Clean up
+
 clean:
 	-sudo docker rm -f cliente2 || true
 	-sudo docker rm -f partida2 || true
 	sudo docker rmi -f cliente2 partida2
 
-# View logs for partida2
+
 logs-partida:
 	sudo docker logs -f partida2

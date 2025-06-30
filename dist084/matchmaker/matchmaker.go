@@ -438,23 +438,24 @@ func (s *server) asignarClienteAPartida(clienteID string) (string, bool) {
 
 // Asignar un cliente a la cola de emparejamiento
 func (s *server) asignarClienteACola(clienteID string) bool {
-	// Verificar si el cliente ya está inscrito
-	if s.clienteYaInscrito(clienteID) {
+	s.partidaMutex.Lock()
+	defer s.partidaMutex.Unlock()
+
+	// Verificar si el cliente ya está inscrito (con el lock activo)
+	if _, existe := s.clientePartida[clienteID]; existe {
 		log.Printf("Cliente %s ya está inscrito en una partida o en cola", clienteID)
 		return false
 	}
 
-	// Añadir a la cola de espera
+	// Añadir a la cola de espera con un único lock
 	s.colaMutex.Lock()
 	s.colaJugadores = append(s.colaJugadores, clienteID)
 	s.colaMutex.Unlock()
 
-	log.Printf("Cliente %s añadido a la cola de emparejamiento", clienteID)
-
-	// Registrar que el cliente está en cola
-	s.partidaMutex.Lock()
+	// Registrar que el cliente está en cola (lock ya adquirido)
 	s.clientePartida[clienteID] = "cola"
-	s.partidaMutex.Unlock()
+
+	log.Printf("Cliente %s añadido a la cola de emparejamiento", clienteID)
 
 	// Intentar crear emparejamientos inmediatamente
 	go s.procesarEmparejamientos()
@@ -1111,17 +1112,28 @@ func (s *server) NotifyMatchResult(ctx context.Context, req *pb.MatchResultNotif
 	// Actualizar tanto la partida lógica como la referencia al servidor
 	s.partidaMutex.Lock()
 
-	// Primero limpiar las referencias de clientePartida para ambos jugadores
+	// Limpiar todas las referencias de manera atómica
 	delete(s.clientePartida, ganadorID)
 	delete(s.clientePartida, perdedorID)
 
-	// Luego actualizar la partida lógica
+	// Actualizar estado de la partida
 	partida, existe := s.partidas[matchID]
 	if existe {
+		// Guardar copias de los IDs de todos los jugadores para limpieza
+		jugadores := append([]string{}, partida.Clientes...)
+
+		// Actualizar estado
 		partida.Estado = Finalizada
 		partida.Resultado = &ResultadoPartida{
 			Ganador:  ganadorID,
 			Perdedor: perdedorID,
+		}
+
+		// Limpiar referencias adicionales si hubiera
+		for _, jugadorID := range jugadores {
+			if jugadorID != ganadorID && jugadorID != perdedorID {
+				delete(s.clientePartida, jugadorID)
+			}
 		}
 	}
 
@@ -1323,57 +1335,6 @@ func (s *server) AdminUpdateServerState(ctx context.Context, req *pb.AdminServer
 	return respuesta, nil
 }
 
-// Añadir esta función al struct server
-
-// Verificar y resolver partidas atascadas
-func (s *server) iniciarVerificadorPartidasAtascadas() {
-	go func() {
-		for {
-			time.Sleep(30 * time.Second) // Verificar cada 30 segundos
-
-			var partidasAtascadas []string
-
-			// Identificar partidas potencialmente atascadas
-			s.partidaMutex.RLock()
-			for id, partida := range s.partidas {
-				if partida.Estado == EnCurso {
-					// Verificar si la partida lleva demasiado tiempo en curso
-					// (Aquí necesitaríamos un timestamp para cada partida)
-					partidasAtascadas = append(partidasAtascadas, id)
-				}
-			}
-			s.partidaMutex.RUnlock()
-
-			// Resolver partidas atascadas una por una
-			for _, id := range partidasAtascadas {
-				s.partidaMutex.RLock()
-				partida, existe := s.partidas[id]
-				servidorID := partida.ServidorID
-				s.partidaMutex.RUnlock()
-
-				if !existe {
-					continue
-				}
-
-				// Verificar el estado del servidor
-				s.servidoresMutex.RLock()
-				servidor, existeServidor := s.servidoresPartidas[servidorID]
-				s.servidoresMutex.RUnlock()
-
-				if !existeServidor || servidor.Status != "DISPONIBLE" && servidor.Status != "OCUPADO" {
-					// El servidor parece estar caído o en estado desconocido
-					log.Printf("ADVERTENCIA: Partida %s atascada. Servidor %s en estado %s",
-						id, servidorID, servidor.Status)
-
-					// Realizar simulación local como fallback
-					log.Printf("Realizando simulación local para la partida atascada %s", id)
-					s.realizarSimulacionLocal(id)
-				}
-			}
-		}
-	}()
-}
-
 func main() {
 	// Inicializar el generador de números aleatorios
 	rand.Seed(time.Now().UnixNano())
@@ -1398,9 +1359,6 @@ func main() {
 
 	// Iniciar el procesamiento periódico de emparejamientos
 	s.iniciarProcesamientoPeriodicoDeEmparejamientos()
-
-	// Iniciar verificador de partidas atascadas
-	s.iniciarVerificadorPartidasAtascadas()
 
 	grpcServer := grpc.NewServer()
 
