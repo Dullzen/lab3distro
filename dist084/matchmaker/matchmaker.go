@@ -636,16 +636,33 @@ func (s *server) obtenerServidorPartidaDisponible() (*ServidorPartida, bool) {
 
 	log.Printf("Buscando servidor de partidas disponible. Servidores registrados: %d", len(s.servidoresPartidas))
 
+	// Si no hay servidores registrados, retornar inmediatamente
+	if len(s.servidoresPartidas) == 0 {
+		return nil, false
+	}
+
+	// Coleccionar todos los servidores disponibles
+	var disponibles []*ServidorPartida
 	for id, sp := range s.servidoresPartidas {
 		log.Printf("Servidor %s tiene estado: %s", id, sp.Status)
 		if sp.Status == "DISPONIBLE" {
-			log.Printf("Usando servidor disponible: %s en %s", id, sp.Address)
-			return sp, true
+			disponibles = append(disponibles, sp)
 		}
 	}
 
-	log.Printf("No se encontró ningún servidor de partidas disponible")
-	return nil, false
+	// Si no hay servidores disponibles, retornar
+	if len(disponibles) == 0 {
+		log.Printf("No se encontró ningún servidor de partidas disponible")
+		return nil, false
+	}
+
+	// Seleccionar un servidor disponible al azar
+	rand.Seed(time.Now().UnixNano())
+	servidorSeleccionado := disponibles[rand.Intn(len(disponibles))]
+
+	log.Printf("Usando servidor disponible (selección aleatoria): %s en %s",
+		servidorSeleccionado.ID, servidorSeleccionado.Address)
+	return servidorSeleccionado, true
 }
 
 // Función auxiliar para realizar simulación local
