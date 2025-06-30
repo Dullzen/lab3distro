@@ -47,7 +47,6 @@ func (vc *VectorClock) Get() map[string]int32 {
 	vc.mutex.RLock()
 	defer vc.mutex.RUnlock()
 
-	// Crear una copia para evitar problemas de concurrencia
 	copy := make(map[string]int32)
 	for k, v := range vc.clock {
 		copy[k] = v
@@ -60,16 +59,14 @@ func (vc *VectorClock) Update(other map[string]int32) {
 	vc.mutex.Lock()
 	defer vc.mutex.Unlock()
 
-	// Incorporar todos los valores del otro reloj
 	for id, value := range other {
-		// Si no existe o el otro tiene un valor mayor, actualizamos
 		if currentValue, exists := vc.clock[id]; !exists || value > currentValue {
 			vc.clock[id] = value
 		}
 	}
 }
 
-// Función para conectar con reintentos
+// Conectar al servidor gRPC con reintentos
 func conectarGRPC(address string, maxRetries int, retryDelay time.Duration) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
 	var err error
@@ -77,17 +74,17 @@ func conectarGRPC(address string, maxRetries int, retryDelay time.Duration) (*gr
 	for i := 0; i < maxRetries; i++ {
 		conn, err = grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(3*time.Second))
 		if err == nil {
-			return conn, nil // Conexión exitosa
+			return conn, nil
 		}
 
 		log.Printf("Intento %d: No se pudo conectar a %s: %v", i+1, address, err)
-		time.Sleep(retryDelay) // Esperar antes de reintentar
+		time.Sleep(retryDelay)
 	}
 
 	return nil, fmt.Errorf("no se pudo conectar a %s después de %d intentos", address, maxRetries)
 }
 
-// Función para mostrar el menú y obtener la opción del usuario
+// Mostrar menú de opciones y obtener input del usuario
 func mostrarMenu(clienteID string) int {
 	fmt.Printf("\n===== %s - MENÚ =====\n", clienteID)
 	fmt.Println("1. Inscribirse para emparejamiento")
@@ -105,7 +102,7 @@ func mostrarMenu(clienteID string) int {
 	return opcion
 }
 
-// Función para mostrar la información de partidas
+// Mostrar información de partidas disponibles
 func mostrarPartidas(partidas []*pb.Partida) {
 	if len(partidas) == 0 {
 		fmt.Println("No hay partidas disponibles")
@@ -114,38 +111,28 @@ func mostrarPartidas(partidas []*pb.Partida) {
 
 	fmt.Println("\n=== LISTADO DE PARTIDAS ===")
 
-	// Paso 1: Crear un mapa para las partidas vacías por ID de servidor
 	servidoresVacios := make(map[string]*pb.Partida)
-
-	// Paso 2: Crear un mapa de partidas activas por servidor (donde se ejecutan)
 	partidasActivas := make(map[string]*pb.Partida)
 
-	// Organizar partidas: primero identificar partidas vacías
 	for _, p := range partidas {
 		if len(p.Clientes) == 0 {
 			servidoresVacios[p.Id] = p
 		}
 	}
 
-	// Luego identificar partidas con jugadores y asignarlas al servidor donde se ejecutan
 	for _, p := range partidas {
 		if len(p.Clientes) > 0 {
-			// Si tiene ServidorId, la partida se está ejecutando en ese servidor
 			if p.ServidorId != "" {
 				partidasActivas[p.ServidorId] = p
 			} else {
-				// Si no tiene ServidorId, se ejecuta en su propio ID
 				partidasActivas[p.Id] = p
 			}
 		}
 	}
 
-	// Mostrar partidas en orden específico
 	servidores := []string{"Partida-1", "Partida-2", "Partida-3"}
 	for i, servidorID := range servidores {
-		// Verificar si hay una partida ejecutándose en este servidor
 		if p, existe := partidasActivas[servidorID]; existe {
-			// Mostrar la partida activa en este servidor
 			estado := p.Estado
 			if estado == "" {
 				estado = "Esperando"
@@ -165,7 +152,6 @@ func mostrarPartidas(partidas []*pb.Partida) {
 
 			fmt.Println(partidaInfo)
 		} else if p, existe := servidoresVacios[servidorID]; existe {
-			// Si no hay partida activa, pero existe el servidor vacío
 			estado := p.Estado
 			if estado == "" {
 				estado = "Esperando"
@@ -174,16 +160,13 @@ func mostrarPartidas(partidas []*pb.Partida) {
 			fmt.Printf("%d. %s (Estado: %s, Disponible) - Jugadores:\n",
 				i+1, servidorID, estado)
 		} else {
-			// No hay información sobre este servidor
 			fmt.Printf("%d. %s (Estado: No disponible) - Jugadores:\n", i+1, servidorID)
 		}
 	}
 	fmt.Println("========================")
 }
 
-// Actualizar las funciones para usar la nueva API
-
-// Función para unirse a la cola de emparejamiento
+// Inscribir jugador en la cola de emparejamiento
 func queuePlayer(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool) {
 	// Incrementar el reloj vectorial antes de enviar un mensaje
 	vectorClock.Increment(clienteID)
@@ -225,7 +208,7 @@ func queuePlayer(client pb.MatchmakerClient, clienteID string, vectorClock *Vect
 	fmt.Printf("[%s] Reloj vectorial actual: %v\n", clienteID, vectorClock.Get())
 }
 
-// Función para consultar el estado del jugador
+// Consultar estado actual del jugador
 func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool, mostrarListado bool, estadoAnterior *string, enPartidaAnterior *bool) {
 	// Guardar valores anteriores
 	estabaEnPartida := *enPartidaAnterior
@@ -356,7 +339,7 @@ func getPlayerStatus(client pb.MatchmakerClient, clienteID string, vectorClock *
 	fmt.Printf("[%s] Reloj vectorial actual: %v\n", clienteID, vectorClock.Get())
 }
 
-// Función para consultar periódicamente el estado del jugador
+// Consulta periódica del estado del jugador
 func consultarEstadoPeriodicamente(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, segundos int, detener *bool) {
 	var estadoAnterior string
 	var enPartidaAnterior bool
@@ -374,7 +357,7 @@ func consultarEstadoPeriodicamente(client pb.MatchmakerClient, clienteID string,
 	}
 }
 
-// Función para enviar una solicitud de desinscripción (cancelación)
+// Cancelar emparejamiento actual
 func cancelQueuePlayer(client pb.MatchmakerClient, clienteID string, vectorClock *VectorClock, detenerConsulta *bool) {
 	// Esta función podría ser implementada como un nuevo método en la API,
 	// pero para compatibilidad, usaremos GetPlayerStatus con un manejo especial

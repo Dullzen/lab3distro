@@ -43,8 +43,7 @@ type Partida struct {
 	Estado     EstadoPartida
 	Resultado  *ResultadoPartida
 	ServidorID string // ID del servidor que ejecuta esta partida
-	// No duplicar la información en otra partida
-	mutex sync.RWMutex
+	mutex      sync.RWMutex
 }
 
 // Verificar si la partida está llena
@@ -244,20 +243,6 @@ func (s *server) crearPartidasIniciales(numPartidas int) {
 	log.Printf("Creadas %d partidas iniciales", numPartidas)
 }
 
-// Obtener partidas disponibles (sólo las que están esperando)
-func (s *server) obtenerPartidasDisponibles() []*Partida {
-	s.partidaMutex.RLock()
-	defer s.partidaMutex.RUnlock()
-
-	var disponibles []*Partida
-	for _, p := range s.partidas {
-		if !p.EstaLlena() && p.Estado == Esperando {
-			disponibles = append(disponibles, p)
-		}
-	}
-	return disponibles
-}
-
 // Verificar si un cliente ya está inscrito en alguna partida
 func (s *server) clienteYaInscrito(clienteID string) bool {
 	s.partidaMutex.RLock()
@@ -429,7 +414,7 @@ func (s *server) asignarClienteAPartida(clienteID string) (string, bool) {
 				s.mutex.Unlock()
 
 				// Al enviar AssignMatchRequest y recibir respuesta exitosa, actualizar el campo ServidorID
-				if err == nil && resp.StatusCode == 0 {
+				if resp.StatusCode == 0 {
 					s.partidaMutex.Lock()
 					if partida, existe := s.partidas[partidaID]; existe {
 						partida.ServidorID = servidor.ID
@@ -543,7 +528,6 @@ func (s *server) procesarEmparejamientos() {
 		}
 	}
 
-	// Si llegamos aquí, uno o ambos jugadores ya no están disponibles
 	// Devolver los jugadores disponibles a la cola
 	s.colaMutex.Lock()
 	if _, ok := s.clientePartida[jugador1]; ok && s.clientePartida[jugador1] == "cola" {
@@ -631,7 +615,7 @@ func (s *server) asignarPartidaAServidor(partidaID string, servidor *ServidorPar
 	s.mutex.Unlock()
 
 	// Actualizar el campo ServidorID si la respuesta es exitosa
-	if err == nil && resp.StatusCode == 0 {
+	if resp.StatusCode == 0 {
 		s.partidaMutex.Lock()
 		if partida, existe := s.partidas[partidaID]; existe {
 			partida.ServidorID = servidor.ID
@@ -663,8 +647,6 @@ func (s *server) obtenerServidorPartidaDisponible() (*ServidorPartida, bool) {
 	log.Printf("No se encontró ningún servidor de partidas disponible")
 	return nil, false
 }
-
-// Simular una partida después de un tiempo determinado
 
 // Función auxiliar para realizar simulación local
 func (s *server) realizarSimulacionLocal(partidaID string) {

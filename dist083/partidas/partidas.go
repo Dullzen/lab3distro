@@ -409,7 +409,6 @@ func (s *partidaServer) notificarResultadoAMatchmaker() {
 }
 
 func main() {
-	// Obtener ID y puerto del servidor de partida desde variables de entorno
 	partidaID := os.Getenv("PARTIDA_ID")
 	if partidaID == "" {
 		partidaID = "Partida-Unknown"
@@ -431,17 +430,16 @@ func main() {
 		log.Fatalf("Error al escuchar: %v", err)
 	}
 
-	// Crear servidor gRPC
 	var serverIP string
 	switch partidaID {
 	case "Partida-1":
-		serverIP = "10.35.168.91" // IP de dist081 para partida1
+		serverIP = "10.35.168.91"
 	case "Partida-2":
-		serverIP = "10.35.168.92" // IP de dist082 para partida2
+		serverIP = "10.35.168.92"
 	case "Partida-3":
-		serverIP = "10.35.168.93" // IP de dist083 para partida3
+		serverIP = "10.35.168.93"
 	default:
-		serverIP = "0.0.0.0" // Fallback
+		serverIP = "0.0.0.0"
 	}
 
 	s := &partidaServer{
@@ -454,17 +452,13 @@ func main() {
 		},
 	}
 
-	// Imprimir la dirección para verificación
 	log.Printf("Registrando servidor con dirección: %s", s.address)
 
 	grpcServer := grpc.NewServer()
-
-	// Registrar el servicio en el servidor
 	pb.RegisterPartidaServiceServer(grpcServer, s)
 
-	// Notificar al matchmaker que estamos disponibles (después de un breve retraso)
 	go func() {
-		time.Sleep(3 * time.Second) // Dar tiempo a que matchmaker esté listo
+		time.Sleep(3 * time.Second)
 		err := s.updateServerStatus(Disponible)
 		if err != nil {
 			log.Printf("Error al registrar servidor con matchmaker: %v", err)
@@ -475,7 +469,6 @@ func main() {
 
 	log.Printf("Servidor de partidas %s listo para recibir solicitudes", partidaID)
 
-	// Iniciar servidor
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Error al servir: %v", err)
 	}
