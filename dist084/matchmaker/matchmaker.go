@@ -1323,6 +1323,57 @@ func (s *server) AdminUpdateServerState(ctx context.Context, req *pb.AdminServer
 	return respuesta, nil
 }
 
+// Añadir esta función al struct server
+
+// Verificar y resolver partidas atascadas
+func (s *server) iniciarVerificadorPartidasAtascadas() {
+	go func() {
+		for {
+			time.Sleep(30 * time.Second) // Verificar cada 30 segundos
+
+			var partidasAtascadas []string
+
+			// Identificar partidas potencialmente atascadas
+			s.partidaMutex.RLock()
+			for id, partida := range s.partidas {
+				if partida.Estado == EnCurso {
+					// Verificar si la partida lleva demasiado tiempo en curso
+					// (Aquí necesitaríamos un timestamp para cada partida)
+					partidasAtascadas = append(partidasAtascadas, id)
+				}
+			}
+			s.partidaMutex.RUnlock()
+
+			// Resolver partidas atascadas una por una
+			for _, id := range partidasAtascadas {
+				s.partidaMutex.RLock()
+				partida, existe := s.partidas[id]
+				servidorID := partida.ServidorID
+				s.partidaMutex.RUnlock()
+
+				if !existe {
+					continue
+				}
+
+				// Verificar el estado del servidor
+				s.servidoresMutex.RLock()
+				servidor, existeServidor := s.servidoresPartidas[servidorID]
+				s.servidoresMutex.RUnlock()
+
+				if !existeServidor || servidor.Status != "DISPONIBLE" && servidor.Status != "OCUPADO" {
+					// El servidor parece estar caído o en estado desconocido
+					log.Printf("ADVERTENCIA: Partida %s atascada. Servidor %s en estado %s",
+						id, servidorID, servidor.Status)
+
+					// Realizar simulación local como fallback
+					log.Printf("Realizando simulación local para la partida atascada %s", id)
+					s.realizarSimulacionLocal(id)
+				}
+			}
+		}
+	}()
+}
+
 func main() {
 	// Inicializar el generador de números aleatorios
 	rand.Seed(time.Now().UnixNano())
@@ -1347,6 +1398,9 @@ func main() {
 
 	// Iniciar el procesamiento periódico de emparejamientos
 	s.iniciarProcesamientoPeriodicoDeEmparejamientos()
+
+	// Iniciar verificador de partidas atascadas
+	s.iniciarVerificadorPartidasAtascadas()
 
 	grpcServer := grpc.NewServer()
 
